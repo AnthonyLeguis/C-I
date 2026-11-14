@@ -23,7 +23,8 @@ export function MailDetail({ email, role, onReview, onAction }: { email: EmailDt
   const isCiso = role !== "ANALYST";
   const canDecide = isCiso && (email.review_status === "PENDING" || email.review_status === "ESCALATED" || isQuarantine);
   const risky = email.risk_level === "HIGH" || email.risk_level === "CRITICAL";
-  const findings = email.indicators.filter((i) => (i.weight ?? 1) > 0);
+  // peso 0 = correos guardados antes de conservar el peso: igual son hallazgos (sin etiqueta de puntos)
+  const findings = email.indicators.filter((i) => (i.weight ?? 1) >= 0);
   const trust = email.indicators.filter((i) => (i.weight ?? 1) < 0);
   // resumen por categoría para la vista compacta (el detalle va en el modal)
   const cats = Object.entries(findings.reduce<Record<string, number>>((acc, f) => { const l = (CATEGORY[f.category] ?? CATEGORY.OTROS).label; acc[l] = (acc[l] ?? 0) + 1; return acc; }, {}));
@@ -82,7 +83,7 @@ export function MailDetail({ email, role, onReview, onAction }: { email: EmailDt
               <li key={i} className="animate-enter flex gap-3 rounded-control border border-line bg-surface-2 p-3" style={{ animationDelay: `${i * 35}ms` }}>
                 <Icon size={18} className="mt-0.5 shrink-0 text-ink-2" aria-hidden />
                 <div className="min-w-0 flex-1"><Eyebrow>{cat.label}</Eyebrow><p className="text-sm text-ink">{f.text}</p></div>
-                {f.weight !== undefined && f.weight !== null && <span className={`self-start rounded-badge px-1.5 font-mono text-xs font-semibold ${f.weight < 0 ? "bg-safe-soft text-safe" : "bg-critical-soft text-critical"}`}>{f.weight > 0 ? `+${f.weight}` : f.weight}</span>}
+                {f.weight !== undefined && f.weight !== 0 && <span className={`self-start rounded-badge px-1.5 font-mono text-xs font-semibold ${f.weight < 0 ? "bg-safe-soft text-safe" : "bg-critical-soft text-critical"}`}>{f.weight > 0 ? `+${f.weight}` : f.weight}</span>}
               </li>
             );
           })}

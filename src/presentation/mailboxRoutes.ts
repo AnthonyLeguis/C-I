@@ -2,6 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AppEnv } from "../env";
+import type { Indicator } from "../domain/types";
 import { effectiveAi } from "../infrastructure/systemSettings";
 import { DEMO_SCENARIOS, findScenario } from "../application/demoScenarios";
 import { analyzeEmail } from "../application/analyzeEmail";
@@ -48,12 +49,15 @@ export function w4Analyzer(ai: Ai | undefined): MailAnalyzer {
       auth_results: email.authResults,
       attachments: email.attachments,
     });
-    const result = await analyzeEmail(parsed, { ai: new WorkersAiGateway(ai) });
+    // El contrato público de /mail/analyze no expone el peso de cada señal; el Buzón sí lo necesita para el
+    // modal de hallazgos, así que se toma del puerto de persistencia (recibe los indicadores completos).
+    let scored: Indicator[] = [];
+    const result = await analyzeEmail(parsed, { ai: new WorkersAiGateway(ai), persistEmail: { save: async (e) => { scored = e.indicators; } } });
     return {
       riskLevel: result.risk_level,
       riskScore: result.risk_score,
       folder: result.action_taken,
-      indicators: result.indicators.map((indicator) => ({ ...indicator, weight: 0 })),
+      indicators: scored.length > 0 ? scored : result.indicators.map((indicator) => ({ ...indicator, weight: 0 })),
       detectedUrls: result.detected_urls,
       legalBasis: result.legal_basis,
       xaiExplanation: result.xai_explanation,
