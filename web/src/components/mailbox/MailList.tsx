@@ -1,46 +1,73 @@
-// Lista de correos con buscador (PR G5). El correo recién llegado entra deslizándose con destello.
-import { Search } from "lucide-react";
-import { useState, type CSSProperties } from "react";
+// Listado de correos estilo Gmail: una fila por correo (avatar, remitente, asunto — extracto, nivel y hora).
+// Al abrir uno, la página muestra el lector en lugar del listado. El correo recién llegado entra con destello.
+import { ChevronRight, Lock } from "lucide-react";
+import type { CSSProperties } from "react";
 import type { EmailDto } from "../../types/contracts";
-import { AlertBadge, EmptyState, ReviewBadge, RISK } from "../ui";
+import { AlertBadge, EmptyState, RISK } from "../ui";
+import { SenderAvatar } from "./SenderAvatar";
 
-const fmt = (iso: string) => new Date(iso).toLocaleString("es-VE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+/** Hoy → «03:56»; otro día → «13/11». */
+export function shortDate(iso: string): string {
+  const d = new Date(iso);
+  const today = new Date();
+  return d.toDateString() === today.toDateString()
+    ? d.toLocaleTimeString("es-VE", { hour: "numeric", minute: "2-digit" })
+    : d.toLocaleDateString("es-VE", { day: "2-digit", month: "2-digit" });
+}
+const snippet = (e: EmailDto) => e.body_sanitized.replace(/https?:\/\/\S+/g, "[enlace]").replace(/\s+/g, " ").trim().slice(0, 140);
 
-export function MailList({ emails, selectedId, freshId, onSelect }: { emails: EmailDto[]; selectedId: string | null; freshId: string | null; onSelect: (id: string) => void }) {
-  const [q, setQ] = useState("");
-  const term = q.trim().toLowerCase();
-  const shown = term ? emails.filter((e) => `${e.subject} ${e.from_address} ${e.from_name ?? ""}`.toLowerCase().includes(term)) : emails;
+function PendingChip({ status }: { status: EmailDto["review_status"] }) {
+  if (status !== "PENDING" && status !== "ESCALATED") return null;
+  const escalated = status === "ESCALATED";
   return (
-    <div className="flex min-h-0 min-w-0 flex-col rounded-card border border-line bg-surface shadow-card">
-      <label className="relative m-3 block">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" aria-hidden />
-        <span className="sr-only">Buscar en buzón</span>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filtrar por asunto, remitente o dominio…" className="w-full rounded-control border border-line bg-surface-2 py-2 pl-9 pr-3 text-sm text-ink focus:border-brand focus:outline-none" />
-      </label>
-      {shown.length === 0 ? (
-        <div className="p-3"><EmptyState title="No hay correos aquí" text="Usa «Simular llegada de correo» para ver cómo actúa C&I." /></div>
-      ) : (
-        <ul className="max-h-[60vh] divide-y divide-line overflow-y-auto">
-          {shown.map((e) => {
-            const fresh = e.id === freshId;
-            const style = fresh && e.risk_level ? ({ "--flash-color": RISK[e.risk_level].color } as CSSProperties) : undefined;
-            return (
-              <li key={e.id}>
-                <button type="button" onClick={() => onSelect(e.id)} style={style} aria-current={e.id === selectedId}
-                  className={`w-full px-4 py-3 text-left transition-colors ${e.id === selectedId ? "border-l-4 border-sidebar bg-low-soft" : "border-l-4 border-transparent hover:bg-surface-2"} ${fresh ? "animate-arrive" : ""}`}>
-                  <div className="flex items-center justify-between gap-2">
-                    {e.risk_level ? <AlertBadge level={e.risk_level} score={e.risk_score ?? undefined} /> : <span />}
-                    <span className="font-mono text-[11px] text-ink-muted">{fmt(e.received_at)}</span>
-                  </div>
-                  <p className="mt-1 truncate text-sm font-semibold text-ink">{e.from_name ?? e.from_address}</p>
-                  <p className="truncate text-sm text-ink-2">{e.subject}</p>
-                  {e.review_status !== "N/A" && <div className="mt-1"><ReviewBadge status={e.review_status} /></div>}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${escalated ? "bg-escalated-soft text-escalated" : "bg-high-soft text-high"}`}>
+      <span className={`h-1.5 w-1.5 rounded-full bg-current ${escalated ? "" : "animate-ci-pulse"}`} aria-hidden />{escalated ? "Escalado" : "Pendiente"}
+    </span>
+  );
+}
+
+export function MailList({ emails, freshId, onOpen }: { emails: EmailDto[]; freshId: string | null; onOpen: (id: string) => void }) {
+  if (emails.length === 0) {
+    return <div className="p-6"><EmptyState title="No hay correos aquí" text="Usa «Simular llegada de correo» para ver cómo actúa C&I." /></div>;
+  }
+  return (
+    <ul className="divide-y divide-line" aria-label="Correos">
+      {emails.map((e, i) => {
+        const fresh = e.id === freshId;
+        const color = e.risk_level ? RISK[e.risk_level].color : "transparent";
+        const style = { "--flash-color": color, animationDelay: fresh ? undefined : `${Math.min(i, 12) * 25}ms` } as CSSProperties;
+        const unread = e.review_status === "PENDING" || e.review_status === "ESCALATED";
+        const quarantined = e.folder === "QUARANTINE";
+        return (
+          <li key={e.id} className={fresh ? "animate-arrive" : "animate-enter"} style={style}>
+            <button type="button" onClick={() => onOpen(e.id)}
+              className="group relative flex w-full items-center gap-3 px-4 py-3 text-left transition-[background-color,box-shadow] duration-150 hover:z-10 hover:bg-surface hover:shadow-[0_6px_18px_-8px_rgba(2,6,23,0.35)] focus-visible:z-10 sm:gap-4 sm:px-5">
+              <span className="absolute inset-y-0 left-0 w-[3px]" style={{ background: color }} aria-hidden />
+              <SenderAvatar name={e.from_name} address={e.from_address} level={e.risk_level} />
+
+              <div className="min-w-0 flex-1 md:grid md:grid-cols-[minmax(0,13rem)_minmax(0,1fr)] md:items-center md:gap-5">
+                <p className={`truncate text-sm ${unread ? "font-bold text-ink" : "font-semibold text-ink-2"}`}>{e.from_name ?? e.from_address}</p>
+                <p className="truncate text-sm">
+                  <span className={unread ? "font-semibold text-ink" : "font-medium text-ink"}>{e.subject}</span>
+                  <span className="text-ink-muted"> — {quarantined ? <span className="inline-flex items-center gap-1"><Lock size={12} className="inline" aria-hidden />contenido aislado en cuarentena</span> : snippet(e)}</span>
+                </p>
+                {/* móvil: nivel y estado bajo el asunto */}
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
+                  {e.risk_level && <AlertBadge level={e.risk_level} score={e.risk_score ?? undefined} />}
+                  <PendingChip status={e.review_status} />
+                </div>
+              </div>
+
+              <div className="hidden shrink-0 items-center gap-2 md:flex">
+                <PendingChip status={e.review_status} />
+                {e.risk_level && <AlertBadge level={e.risk_level} score={e.risk_score ?? undefined} />}
+              </div>
+              <span className={`shrink-0 whitespace-nowrap text-right font-mono text-xs sm:w-[5.5rem] ${unread ? "font-semibold text-ink" : "text-ink-muted"}`}>{shortDate(e.received_at)}</span>
+              <ChevronRight size={16} aria-hidden className="hidden shrink-0 text-ink-muted opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0.5 group-hover:opacity-100 sm:block" />
+            </button>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
