@@ -4,6 +4,7 @@ export * from "./Button";
 export * from "./Card";
 export * from "./KpiCard";
 export * from "./levels";
+export * from "./Logo";
 export * from "./motion";
 export * from "./RiskMeter";
 export * from "./Sidebar";
