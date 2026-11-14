@@ -296,9 +296,9 @@ Lo que el rol no permite **no se muestra** (no se deshabilita): el menú y los b
 2. Problema: el correo como puerta de entrada + cifras con fuente.
 3. Solución: C&I en una frase + las 3 acciones (detecta, aísla, explica).
 4. Demo (captura o video corto de respaldo).
-5. IA responsable: reglas deciden, IA explica, PII protegida, revisión humana.
+5. IA responsable: cómo se calcula el puntaje (reglas 70 % + IA 30 %), PII protegida, revisión humana.
 6. Arquitectura: Cloudflare (Workers, D1, Workers AI) + SDD.
-7. Roadmap: conexión a correo real + versión on-premise con IA local.
+7. **Instalable dentro del banco:** el mismo sistema en un contenedor sin internet, con IA local (datos que nunca salen de la institución) + conexión al correo real del banco.
 8. Equipo C&I.
 
 ### 9.2 Video (2–3 min)
