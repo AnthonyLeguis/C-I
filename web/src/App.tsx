@@ -5,6 +5,7 @@ import { AlertTriangle, Info, ShieldAlert, ShieldCheck, Sparkles } from "lucide-
 import { api } from "./services/apiClient";
 import type { HealthResponse } from "./types/contracts";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
+import { UiShowcase } from "./pages/UiShowcase";
 
 type Status = { kind: "loading" } | { kind: "ok"; data: HealthResponse } | { kind: "error"; message: string };
 
@@ -16,6 +17,12 @@ const LEVELS = [
 ] as const;
 
 export function App() {
+  // Enrutado temporal: /ui muestra el kit (X2). G5 reemplaza esto con el enrutado real.
+  if (window.location.pathname === "/ui") return <UiShowcase />;
+  return <StatusPage />;
+}
+
+function StatusPage() {
   const [status, setStatus] = useState<Status>({ kind: "loading" });
 
   useEffect(() => {
