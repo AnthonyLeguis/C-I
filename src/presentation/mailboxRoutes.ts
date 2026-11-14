@@ -3,13 +3,16 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { AppEnv } from "../env";
 import { DEMO_SCENARIOS, findScenario } from "../application/demoScenarios";
-import { rulesOnlyAnalyzer } from "../application/interimAnalyzer";
+import { analyzeEmail } from "../application/analyzeEmail";
+import type { MailAnalyzer } from "../application/interimAnalyzer";
 import { approveEmail, escalateEmail } from "../application/actions";
 import { deliverEmail, listMailbox, reviewEmail, type MailboxEmail, type MailboxStorePort } from "../application/mailbox";
 import { domainStoreFor } from "../infrastructure/domainStore";
 import { getCurrentUser, requireRole } from "../infrastructure/auth";
 import { AuditRepository, emailRepository } from "../infrastructure/d1Repos";
+import { parseEmail } from "../infrastructure/emailParser";
 import { sanitizePii } from "../infrastructure/piiSanitizer";
+import { WorkersAiGateway } from "../infrastructure/workersAiGateway";
 
 const View = z.enum(["ALL", "PENDING", "INBOX", "SPAM", "QUARANTINE"]).default("ALL");
 const DeliverRequest = z.object({ case_id: z.string().min(1) });
@@ -31,6 +34,37 @@ const toDto = (e: MailboxEmail) => ({
   indicators: e.indicators, legal_basis: e.legalBasis, xai_explanation: e.xaiExplanation, review_status: e.reviewStatus,
 });
 
+
+/** Adapta el analizador W4 (caso de uso) al puerto `MailAnalyzer` que usa G3. */
+export function w4Analyzer(ai: Ai | undefined): MailAnalyzer {
+  return async (email) => {
+    const parsed = parseEmail({
+      from_address: email.fromAddress,
+      from_name: email.fromName,
+      reply_to: email.replyTo,
+      subject: email.subject,
+      body: email.body,
+      auth_results: email.authResults,
+      attachments: email.attachments,
+    });
+    const result = await analyzeEmail(parsed, { ai: new WorkersAiGateway(ai) });
+    return {
+      riskLevel: result.risk_level,
+      riskScore: result.risk_score,
+      folder: result.action_taken,
+      indicators: result.indicators.map((indicator) => ({ ...indicator, weight: 0 })),
+      detectedUrls: result.detected_urls,
+      legalBasis: result.legal_basis,
+      xaiExplanation: result.xai_explanation,
+      recommendation: result.recommendation,
+      piiMasked: result.pii_masked,
+      aiUsed: result.ai_used,
+      aiModel: result.ai_model,
+      humanReviewRequired: result.human_review_required,
+    };
+  };
+}
+
 export const mailboxRoutes = new Hono<AppEnv>();
 
 mailboxRoutes.get("/", requireRole("ANALYST") as never, async (c) => {
@@ -51,7 +85,7 @@ mailboxRoutes.post("/deliver", requireRole("ANALYST") as never, async (c) => {
   if (!scenario) return c.json({ error: "Escenario no encontrado." }, 404);
   const result = await deliverEmail(scenario.email, {
     store: storeFor(c.env.DB), audit: new AuditRepository(c.env.DB),
-    analyze: rulesOnlyAnalyzer, // ⚠️ Cambiar por analyzeEmail de W4 cuando entre
+    analyze: w4Analyzer(c.env.AI),
     sanitize: (t) => sanitizePii(t).sanitized, newId: () => crypto.randomUUID(), now: () => new Date(),
     isBlocked: (d) => domainStoreFor(c.env.DB).isBlocked(d),
   });
