@@ -83,7 +83,7 @@ Espaciado en múltiplos de 8 px · padding de tarjeta 24 px · separación 16 px
 
 | Caso | Badge | Color |
 |---|---|---|
-| `ai_used = true` | `Sparkles` "Explicación generada por IA · GLM-4.7 Flash" | cian `--secondary` |
+| `ai_used = true` | `Sparkles` "Explicación generada por IA · Llama 3.3 70B" | cian `--secondary` |
 | `ai_used = false` | `Cpu` "Análisis determinista (reglas)" | gris azulado |
 | Asistente bloqueado | `Ban` "Bloqueado por el guardián ético" | rojo |
 

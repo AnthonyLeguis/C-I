@@ -106,7 +106,8 @@
 - **GitHub Actions:** 🔷 *el "robot" de GitHub que ejecuta nuestras pruebas y despliegues automáticos.*
 - **GitHub:** sitio web donde se guardan repositorios Git en internet.
 - **`.gitignore`:** archivo con la lista de cosas que Git **no** debe subir (claves, carpetas pesadas).
-- **GLM-4.7 Flash:** 🔷 *modelo de IA que usamos en Workers AI para redactar las explicaciones.*
+- **GLM-4.7 Flash:** modelo de IA de razonamiento disponible en Workers AI; lo probamos y lo descartamos como principal porque tarda ~7 s. 🔷 *Ver Llama 3.3.*
+- **Llama 3.3 70B:** 🔷 *modelo de IA de Meta que usamos en Workers AI para redactar las explicaciones (~1 s).*
 
 ## H
 
