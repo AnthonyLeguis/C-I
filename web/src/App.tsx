@@ -1,13 +1,54 @@
-// Enrutado temporal por ruta. G5 (Gabriel) lo reemplaza por el enrutado real con sesión.
-import { UiShowcase } from "./pages/UiShowcase";
-import { AssistantPreview } from "./pages/AssistantPreview";
-import { TimelineQa } from "./pages/TimelineQa"; // MÓDULO ELIMINABLE
+// Enrutado de la app con sesión (PR G5). Las pantallas aún no construidas muestran su diseño del prototipo.
+import { useEffect, type ReactNode } from "react";
+import { navigate, routeFromPath, usePath } from "./app/router";
+import { AppShell } from "./components/layout/AppShell";
+import { PendingScreen } from "./components/layout/PendingScreen";
+import { SkeletonCard, ToastProvider } from "./components/ui";
+import { SessionProvider, useSession } from "./hooks/useSession";
+import { AssistantPage } from "./pages/Assistant";
 import { Home } from "./pages/Home";
+import { LoginPage } from "./pages/Login";
+import { MailboxPage } from "./pages/Mailbox";
+import { TimelineQa } from "./pages/TimelineQa"; // MÓDULO ELIMINABLE
+import { UiShowcase } from "./pages/UiShowcase";
 
 export function App() {
-  const path = window.location.pathname;
-  if (path === "/ui") return <UiShowcase />;
-  if (path === "/asistente") return <AssistantPreview />;
-  if (path === "/timeline-qa") return <TimelineQa />; // MÓDULO ELIMINABLE
-  return <Home />;
+  return (
+    <SessionProvider>
+      <ToastProvider>
+        <Routes />
+      </ToastProvider>
+    </SessionProvider>
+  );
+}
+
+function Routes() {
+  const path = usePath();
+  const route = routeFromPath(path);
+  const { user, loading } = useSession();
+
+  // Páginas públicas, sin sesión
+  if (route === "ui") return <UiShowcase />;
+  if (route === "timeline-qa") return <TimelineQa />; // MÓDULO ELIMINABLE
+  if (route === "mapa") return <Home />;
+
+  if (loading) return <div className="mx-auto max-w-xl p-8"><SkeletonCard /></div>;
+  if (!user) return <Redirect to="login" when={route !== "login"}><LoginPage onDone={() => navigate("panel", true)} /></Redirect>;
+  if (route === "login" || route === null) return <Redirect to="panel" when />;
+
+  return (
+    <AppShell active={route}>
+      {route === "buzon" && <MailboxPage />}
+      {route === "asistente" && <AssistantPage />}
+      {route === "panel" && <PendingScreen name="Panel Principal" owner="Gabriel (G6)" mock="03-panel-kpi.jpg" />}
+      {route === "analizar" && <PendingScreen name="Analizador de Casos" owner="Williams (X3)" mock="10-analizador-expediente.jpg" />}
+      {route === "bitacora" && <PendingScreen name="Bitácora de Eventos" owner="Gabriel (G6)" mock="12-bitacora.jpg" />}
+      {route === "soporte" && <PendingScreen name="Consola de Soporte" owner="Anthony (A6)" mock="14-consola-soporte.jpg" />}
+    </AppShell>
+  );
+}
+
+function Redirect({ to, when, children = null }: { to: "login" | "panel"; when: boolean; children?: ReactNode }) {
+  useEffect(() => { if (when) navigate(to, true); }, [to, when]);
+  return <>{children}</>;
 }
