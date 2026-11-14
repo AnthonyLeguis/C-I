@@ -49,7 +49,9 @@ export function useMailbox() {
       const r = await api.deliver(caseId);
       setView("ALL");
       const d = await api.mailbox("ALL");
-      setData(d); setSelectedId(null); setFreshId(r.email_id); // el correo nuevo entra al listado con destello
+      // El correo nuevo entra al listado con destello. No se toca la selección: «Simular llegada» solo existe en el
+      // listado, y si la persona ya abrió un correo mientras se refrescaba el buzón, el lector debe quedarse abierto.
+      setData(d); setFreshId(r.email_id);
       window.setTimeout(() => setFreshId(null), 2200);
       return r;
     } finally { setBusy(false); }
