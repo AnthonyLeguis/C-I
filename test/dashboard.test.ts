@@ -66,6 +66,18 @@ describe("buildDashboard (G4)", () => {
   });
 });
 
+describe("estado de IA del panel", () => {
+  const now2 = new Date("2026-11-14T10:30:00Z");
+  const ev = (o: Partial<DashboardAuditRow>): DashboardAuditRow => ({ id: "x", createdAt: "2026-11-14T10:28:00Z", module: "MAIL_ANALYZER", actor: "SYSTEM", riskLevel: null, actionTaken: "INBOX", piiDetected: [], aiUsed: true, hash: "h", ...o });
+  it("un bloqueo del guardián por reglas no marca la IA como caída", () => {
+    expect(buildDashboard({ emails: [], audit: [ev({ module: "ASSISTANT_GUARD", aiUsed: false }), ev({ aiUsed: true })], chainOk: true, now: now2 }).ai_status).toBe("ONLINE");
+    expect(buildDashboard({ emails: [], audit: [ev({ module: "ASSISTANT_GUARD", aiUsed: false })], chainOk: true, now: now2 }).ai_status).toBe("UNKNOWN");
+  });
+  it("análisis de correo sin IA → FALLBACK", () => {
+    expect(buildDashboard({ emails: [], audit: [ev({ aiUsed: false })], chainOk: true, now: now2 }).ai_status).toBe("FALLBACK");
+  });
+});
+
 describe("inferEntity", () => {
   it.each([
     ["SUDEBAN - Supervisión", "a@x.com", "SUDEBAN"],
