@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { AnswerCard } from "../components/assistant/AnswerCard";
 import { BlockedCard } from "../components/assistant/BlockedCard";
 import { Composer, SUGGESTIONS } from "../components/assistant/Composer";
+import { OutOfScopeCard } from "../components/assistant/OutOfScopeCard";
 import { MaskedText } from "../components/assistant/MaskedText";
 import { Button, EmptyState, ErrorState, Eyebrow, Skeleton, Stagger } from "../components/ui";
 import { useAssistant } from "../hooks/useAssistant";
@@ -20,15 +21,15 @@ export function AssistantPage() {
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2 rounded-card border border-line bg-surface px-4 py-3 text-sm text-ink-2 shadow-card">
         <ShieldCheck size={18} className="text-brand" aria-hidden />
-        <span className="min-w-[220px] flex-1">Tus datos personales se tapan antes de llegar a la IA, y C&amp;I rechaza cualquier petición para atacar.</span>
+        <span className="min-w-[220px] flex-1">Asistente de contexto cerrado: responde solo sobre el sistema C&amp;I y la seguridad del correo del banco. Tus datos personales se tapan antes de llegar a la IA y se rechaza cualquier petición para atacar.</span>
         {turns.length > 0 && <Button size="sm" variant="ghost" icon={<RotateCcw size={14} />} onClick={clear}>Nueva conversación</Button>}
       </div>
 
       {turns.length === 0 && !loading ? (
         <EmptyState
           icon={MessageSquareText}
-          title="¿En qué te ayudo con la seguridad del correo?"
-          text="Pregunta sobre un correo sospechoso, cómo reconocer un fraude o qué hacer si ya hiciste clic."
+          title="¿En qué te ayudo con el sistema C&I?"
+          text="Pregunta cómo usar el sistema, cómo se calcula el riesgo o qué hacer con un correo sospechoso. Las preguntas ajenas al sistema no se responden."
           action={
             <Stagger className="mt-2 flex flex-wrap justify-center gap-2" step={60}>
               {SUGGESTIONS.map((s) => (
@@ -44,7 +45,7 @@ export function AssistantPage() {
           {turns.map((t) => (
             <li key={t.id} className="animate-enter">
               {t.kind === "question" && <Question original={t.original} sanitized={nextSanitized(turns, t.id)} />}
-              {t.kind === "answer" && (t.result.blocked ? <BlockedCard result={t.result} /> : <AnswerCard result={t.result} />)}
+              {t.kind === "answer" && (t.result.blocked ? <BlockedCard result={t.result} /> : t.result.out_of_scope ? <OutOfScopeCard result={t.result} onAsk={(q) => void ask(q)} /> : <AnswerCard result={t.result} />)}
               {t.kind === "error" && <ErrorState text={t.message} onRetry={() => void ask(t.retry)} />}
             </li>
           ))}
