@@ -15,10 +15,10 @@ const READY: Screen[] = [
   { name: "Bitácora de Eventos", desc: "Filtros, verificación de integridad y CSV.", icon: ScrollText, href: "/bitacora", owner: "Gabriel", point: "G2 + G6" },
   { name: "Analizador de Casos", desc: "Analiza cualquier correo con reglas, IA y fundamento legal.", icon: ScanSearch, href: "/analizar", owner: "Williams", point: "W4 + X3" },
   { name: "Asistente IA", desc: "Preguntas con datos tapados y guardián ético (IA real).", icon: MessageSquareText, href: "/asistente", owner: "Anthony", point: "A3 + A4" },
+  { name: "Consola de Soporte", desc: "Estado del sistema, modo reglas y restablecer demo (Master).", icon: Wrench, href: "/soporte", owner: "Anthony", point: "A6" },
   { name: "Kit de componentes", desc: "Colores, niveles de alerta, medidor, KPI y animaciones.", icon: Palette, href: "/ui", owner: "Anthony", point: "X1 + X2" },
 ];
 const PENDING: Screen[] = [
-  { name: "Consola de Soporte", desc: "Estado del sistema y modo reglas.", icon: Wrench, owner: "Anthony", point: "A6", mock: "14-consola-soporte.jpg" },
 ];
 
 export function Home() {
@@ -47,12 +47,14 @@ export function Home() {
           </Stagger>
         </section>
 
+        {PENDING.length > 0 && (
         <section>
           <Eyebrow className="mb-3">En construcción (diseño de Alejandro)</Eyebrow>
           <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {PENDING.map((s) => <ScreenCard key={s.name} s={s} ready={false} />)}
           </Stagger>
         </section>
+        )}
       </PageTransition>
     </main>
   );

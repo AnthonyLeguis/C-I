@@ -69,6 +69,13 @@ export interface AuditEventDto {
   action_taken: string; email_id: string | null; xai_explanation: string | null; ai_used: boolean; ai_model: string | null; prev_hash: string | null; hash: string;
 }
 export interface AuditEventsResponse { total: number; events: AuditEventDto[] }
+export type AiMode = "ONLINE" | "RULES";
+export interface SupportStatus {
+  ai: { mode: AiMode; binding: boolean; model: string; fallback_model: string; guard_model: string };
+  database: { ok: boolean; latency_ms: number; emails: number; events: number; blocked: number };
+  mail_ingestion: { source: string; ok: boolean };
+  checked_at: string;
+}
 export interface DemoUser { username: string; display_name: string; role: Role }
 export interface ReviewResponse { email_id: string; review_status: ReviewStatus; folder: Folder; audit_hash: string }
 

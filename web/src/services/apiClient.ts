@@ -1,7 +1,7 @@
 // ÚNICO archivo del frontend donde se permite fetch(). Archivo compartido: solo lo modifica Anthony.
 import type {
   AnalyzeRequest, AnalyzeResponse, AskResponse, DashboardResponse, DeliverResponse, DemoScenarioDto, DemoUser, HealthResponse, MailboxResponse,
-  AuditEventsResponse, BlockedDomainDto, MailboxView, ReviewResponse, TimelineQaResponse, User,
+  AiMode, AuditEventsResponse, BlockedDomainDto, SupportStatus, MailboxView, ReviewResponse, TimelineQaResponse, User,
 } from "../types/contracts";
 
 export class ApiClientError extends Error {
@@ -47,6 +47,9 @@ export const api = {
     const p = new URLSearchParams(Object.entries(f).filter(([, v]) => v) as [string, string][]);
     return request<AuditEventsResponse>(`/audit/events?${p.toString()}`);
   },
+  supportStatus: () => request<SupportStatus>("/support/status"),
+  setAiMode: (mode: AiMode) => post<{ mode: AiMode; audit_hash: string }>("/support/mode", { mode }),
+  resetDemo: (withSamples = true) => post<{ ok: boolean; loaded: number }>("/support/reset-demo", { with_samples: withSamples }),
   /** URL directa de descarga (el navegador envía la cookie de sesión). */
   auditCsvUrl: "/api/v1/audit/export.csv",
   dashboard: () => request<DashboardResponse>("/dashboard"),
