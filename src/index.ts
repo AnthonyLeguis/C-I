@@ -8,6 +8,7 @@ import { dashboardRoutes } from "./presentation/dashboardRoutes";
 import { assistantRoutes } from "./presentation/assistantRoutes";
 import { auditRoutes } from "./presentation/auditRoutes";
 import { domainRoutes } from "./presentation/domainRoutes";
+import { supportRoutes } from "./presentation/supportRoutes";
 import { timelineQaRoutes } from "./presentation/timelineQaRoutes"; // MÓDULO ELIMINABLE
 
 const app = new Hono<AppEnv>().basePath("/api/v1");
@@ -20,6 +21,7 @@ app.route("/dashboard", dashboardRoutes);
 app.route("/assistant", assistantRoutes);
 app.route("/audit", auditRoutes);
 app.route("/domains", domainRoutes);
+app.route("/support", supportRoutes);
 app.route("/timeline-qa", timelineQaRoutes); // MÓDULO ELIMINABLE
 
 app.notFound((c) => c.json({ error: "Ruta no encontrada." }, 404));

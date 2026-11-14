@@ -2,6 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AppEnv } from "../env";
+import { effectiveAi } from "../infrastructure/systemSettings";
 import { analyzeEmail } from "../application/analyzeEmail";
 import type { EmailPersistencePort } from "../application/analyzeEmail";
 import { getCurrentUser, requireRole } from "../infrastructure/auth";
@@ -51,7 +52,7 @@ mailRoutes.post("/analyze", requireRole("ANALYST") as never, async (c) => {
 
   const user = await getCurrentUser(c);
   const result = await analyzeEmail(email, {
-    ai: new WorkersAiGateway(c.env.AI),
+    ai: new WorkersAiGateway(await effectiveAi(c.env)),
     audit: db === undefined ? undefined : new AuditRepository(db),
     persistEmail,
     actor: user?.username ?? "SYSTEM",

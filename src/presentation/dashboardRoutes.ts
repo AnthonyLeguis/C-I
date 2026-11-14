@@ -4,11 +4,14 @@ import type { AppEnv } from "../env";
 import { buildDashboard } from "../application/dashboard";
 import { requireRole } from "../infrastructure/auth";
 import { loadDashboardData } from "../infrastructure/dashboardQueries";
+import { getAiMode } from "../infrastructure/systemSettings";
 
 export const dashboardRoutes = new Hono<AppEnv>();
 
 dashboardRoutes.get("/", requireRole("ANALYST") as never, async (c) => {
   const data = await loadDashboardData(c.env.DB);
   c.header("cache-control", "no-store");
-  return c.json(buildDashboard({ ...data, now: new Date() }));
+  const d = buildDashboard({ ...data, now: new Date() });
+  // A6: en modo reglas el estado de IA es siempre FALLBACK.
+  return c.json((await getAiMode(c.env.DB)) === "RULES" ? { ...d, ai_status: "FALLBACK" } : d);
 });
