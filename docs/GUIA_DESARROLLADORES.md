@@ -1,6 +1,6 @@
 # 👩‍💻 C&I — Guía paso a paso para desarrolladores
 
-> Para Williams, Gabriel y Alejandro (y Anthony). Sigue los pasos **en orden**. Si algo falla más de 20 minutos, avisa a Anthony.
+> Para Williams, Gabriel y Anthony. (Alejandro diseña fuera de GitHub y envía sus diseños por el chat interno; están en `docs/design/`.) Sigue los pasos **en orden**. Si algo falla más de 20 minutos, avisa a Anthony.
 > Repo: **https://github.com/AnthonyLeguis/C-I**
 > Documentos: [C&I.md](C%26I.md) (PRD/TRD, nuestro norte) · [PLAN_PRS.md](PLAN_PRS.md) (tus puntos) · [PLAN_UX.md](PLAN_UX.md) (diseño) · [GLOSARIO.md](GLOSARIO.md) (siglas)
 
@@ -105,7 +105,7 @@ npm run build:web && npx wrangler dev --env offline
 
 Abre http://localhost:8787. Para ver cambios del frontend, vuelve a ejecutar el comando.
 
-**Opción B · Diseñando pantallas (recarga instantánea, ideal para Alejandro y Gabriel):** dos terminales.
+**Opción B · Construyendo pantallas (recarga instantánea, ideal para las vistas de Williams, Gabriel y Anthony):** dos terminales.
 
 Terminal 1 (API):
 

@@ -1,5 +1,7 @@
 # 🎨 C&I — Plan de UX/UI (Alejandro Sánchez)
 
+> **Flujo:** Alejandro diseña con este plan y envía todo por el **chat interno** (no usa GitHub). Anthony sube los diseños a `docs/design/`. Lo implementan: Anthony (tema y componentes), Williams (Analizador), Gabriel (Login, Buzón, Panel, Bitácora) y Anthony (Asistente). Ver `PLAN_PRS.md` §2.4.
+
 > Complemento de [C&I.md](C%26I.md) y [PLAN_PRS.md](PLAN_PRS.md). Es la **especificación visual**: Gabriel, Williams y Anthony construyen sus pantallas con estas reglas, y el agente QA las verifica.
 
 ---
@@ -173,7 +175,7 @@ Gabriel implementa **todos** estos campos (PR G4) y los dibuja (PR G6).
 | Login | `/login` | ✅ | ✅ | ✅ | Gabriel |
 | Panel | `/` | ✅ (sin cola de revisión) | ✅ | ✅ | Gabriel |
 | Buzón | `/buzon` | ✅ ver | ✅ ver + confirmar/restaurar | ✅ | Gabriel |
-| Analizador | `/analizar` | ✅ | ✅ | ✅ | Alejandro |
+| Analizador | `/analizar` | ✅ | ✅ | ✅ | Williams (diseño de Alejandro) |
 | Asistente | `/asistente` | ✅ | ✅ | ✅ | Anthony |
 | Bitácora | `/bitacora` | ❌ | ✅ ver | ✅ ver + verificar cadena | Gabriel |
 
@@ -206,7 +208,7 @@ Lo que el rol no permite **no se muestra** (no se deshabilita): el menú y los b
 - "Simular llegada de correo" despliega los 6 casos de `DEMO_CASES.md`. Al elegir uno se ve una animación corta de "Analizando…" (barra cian) y el correo aparece en su carpeta con un destello del color de su nivel. **Es el momento clave de la demo.**
 - Al confirmar o restaurar: toast "Decisión registrada en la bitácora · hash a3f9…".
 
-### 5.4 Analizador (pantalla de Alejandro)
+### 5.4 Analizador (diseño de Alejandro, código de Williams)
 
 ```text
 ┌ ENTRADA (50%) ───────────────────────────┐┌ DICTAMEN (50%) ───────────────────────────────┐
@@ -275,16 +277,17 @@ Lo que el rol no permite **no se muestra** (no se deshabilita): el menú y los b
 
 ---
 
-## 9. Entregables de Alejandro y horario
+## 9. Entregables de Alejandro y horario (por chat interno; ver D0–D5 en `PLAN_PRS.md` §2.4)
 
 | Hora | Entregable |
 |---|---|
-| Vie 23:00 (CP0) | **X0**: bocetos de Login, Panel, Buzón, Analizador, Asistente y Bitácora en `docs/design/` |
-| Sáb 01:00 (CP1) | **X1**: tokens y tema |
+| Vie 23:00 (CP0) | **D0**: bocetos de Login, Panel, Buzón, Analizador, Asistente y Bitácora (por chat) |
+| Sáb 01:00 (CP1) | **D1**: detalle de badges, RiskMeter, KPI, Topbar y Sidebar (por chat) |
 | Sáb 01:00–04:00 | 😴 **Descanso obligatorio** (presentador) |
-| Sáb 05:00 (CP3) | **X2 y X3**: kit de componentes y Analizador |
-| Sáb 10:00 (CP5) | **X4 y X5**: pulido, README y guion del pitch |
-| Sáb 12:00 (CP6) | **Deck y video** desde producción |
+| Sáb 05:00–10:00 | **D2**: revisión visual de cada pantalla en el entorno QA y lista de ajustes |
+| Sáb 08:00 (CP4) | **D5**: cifras del problema con fuente (con Williams) |
+| Sáb 10:00 (CP5) | **D3**: textos del README y guion del pitch |
+| Sáb 12:00 (CP6) | **D4**: deck y video desde producción |
 | Sáb 13:00–15:30 | Ensayos del pitch (mínimo 5) |
 
 ### 9.1 Deck (6–8 diapositivas)
