@@ -170,6 +170,41 @@ Correo entrante (buzón demo o pegado)
   ──► [8] Bitácora en D1 con hash SHA-256 del evento
 ```
 
+### 4.2.1 Cómo se calcula el puntaje (score) de riesgo
+
+El puntaje va de **0 a 100** y se arma en 3 pasos. Williams implementa los pesos en `emailHeuristics.ts` (W3); estos son los **pesos de referencia** (se pueden ajustar con los casos de prueba, documentando el cambio):
+
+**Paso 1 · Puntaje de reglas** (suma de indicadores encontrados, con tope de 100):
+
+| Indicador | Categoría | Peso |
+|---|---|---|
+| Dominio que imita a una entidad oficial (SUDEBAN, un banco) sin ser el oficial | Remitente | +35 |
+| Adjunto peligroso (.exe, .js, .scr, macros) o con doble extensión (`.pdf.exe`) | Adjuntos | +30 |
+| Pide claves, usuario o datos de acceso | Ingeniería social | +25 |
+| Pide transferencia urgente o cambio de cuenta de un proveedor (fraude del CEO) | Ingeniería social | +25 |
+| Autenticación fallida: DMARC o SPF en `fail` | Autenticación | +20 |
+| Enlace a dominio falso, IP en vez de dominio, o acortador | Enlaces | +20 |
+| Texto del enlace distinto a su destino real | Enlaces | +15 |
+| Reply-To distinto al remitente o de correo gratuito | Remitente | +15 |
+| Urgencia o amenaza ("último aviso", "suspensión", "24 horas") | Ingeniería social | +15 |
+| Nombre visible que no coincide con el dominio | Remitente | +10 |
+| Autenticación ausente: DKIM/SPF en `none` | Autenticación | +10 |
+| Remitente del dominio oficial con SPF, DKIM y DMARC en `pass` | Confianza | −20 |
+
+**Paso 2 · Puntaje de la IA:** la IA recibe el correo **ya anonimizado** y estima de 0 a 100 qué tan probable es que sea ingeniería social.
+
+**Paso 3 · Fusión ("las reglas deciden, la IA explica"):**
+
+```
+Puntaje final = Reglas × 0,7 + IA × 0,3        (si la IA no responde: Puntaje final = Reglas)
+```
+
+**Paso 4 · Nivel y acción:** 0–19 SEGURO (bandeja) · 20–49 BAJO (bandeja con aviso) · 50–79 ALTO (spam) · 80–100 CRÍTICO (cuarentena + revisión humana).
+
+**Ejemplo (falso correo de SUDEBAN):** dominio que imita (35) + adjunto `.pdf.exe` (30) + pide clave (25) + DMARC fail (20) + Reply-To gmail (15) + urgencia (15) = 140 → **tope 100**. La IA estima 90. Final = 100 × 0,7 + 90 × 0,3 = **97 → CRÍTICO → cuarentena**.
+
+> Por qué la IA pesa solo 30 %: las reglas son verificables y siempre dan el mismo resultado; la IA ayuda a captar matices del lenguaje, pero nunca puede, por sí sola, mandar un correo legítimo a cuarentena ni sacar uno peligroso de ella.
+
 ### 4.3 Estructura del repositorio (`c-i/`)
 
 ```text
@@ -580,9 +615,11 @@ Anthony Leguisamo · Williams Mejía · Gabriel Flores · Alejandro Sánchez —
 | 0:30–1:45 | **Demo en vivo:** botón "Simular llegada" → el correo cae solo en **Cuarentena** con su dictamen y su fundamento legal → un correo legítimo queda en Bandeja → el supervisor de seguridad confirma → el asistente bloquea una petición para saltar el firewall | Viabilidad / MVP  |
 | 1:45–2:15 | IA responsable: reglas deciden, IA explica, PII anonimizada, revisión humana, bitácora con hash                                                                                                                                                                | Ética + uso de IA |
 | 2:15–2:40 | Arquitectura Cloudflare + SDD + tests automáticos                                                                                                                                                                                                              | Calidad técnica   |
-| 2:40–3:00 | Roadmap: conexión con Exchange/Gmail y **versión on-premise con IA local** para soberanía total de los datos bancarios                                                                                                                                         | Escalabilidad     |
+| 2:40–3:00 | **Instalable dentro del banco:** "Hoy lo ven en la nube, pero el mismo sistema ya corre en un contenedor **sin internet**. En un banco se instala en sus propios servidores, con la IA funcionando localmente: los datos nunca salen de la institución." + conexión con su servidor de correo | Escalabilidad y soberanía |
 
-Preguntas a preparar: falsos positivos · ¿por qué no solo IA? · ¿cómo se conecta a un correo real? · ¿y la soberanía de los datos? (respuesta: la versión on-premise con Ollama usa el mismo puerto de IA) · ¿qué normas aplican?
+**Demostración opcional (si preguntan por la instalación interna):** mostrar el contenedor Docker en modo `offline` funcionando sin internet (`docker compose up`).
+
+Preguntas a preparar: ¿se puede instalar dentro del banco? (sí: contenedor + IA local con Ollama, mismo código) · falsos positivos · ¿por qué no solo IA? · ¿cómo se conecta a un correo real? · ¿y la soberanía de los datos? (respuesta: la versión on-premise con Ollama usa el mismo puerto de IA) · ¿qué normas aplican?
 
 ---
 
