@@ -57,6 +57,9 @@ export interface EmailDto {
   legal_basis: LegalBasis[];
   xai_explanation: string | null;
   review_status: ReviewStatus;
+  /** Origen de la explicación: redactada por la IA (con su modelo) o por el motor de reglas. */
+  ai_used?: boolean;
+  ai_model?: string | null;
 }
 
 export type MailboxView = Folder | "ALL" | "PENDING";

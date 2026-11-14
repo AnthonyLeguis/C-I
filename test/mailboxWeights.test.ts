@@ -11,3 +11,14 @@ describe("Buzón: los hallazgos conservan su peso (modal de hallazgos técnicos)
     expect(verdict.indicators.some((i) => i.weight >= 30)).toBe(true);
   });
 });
+
+describe("Buzón: etiqueta real del origen de la explicación (transparencia de la IA)", () => {
+  it("une a cada correo si su explicación la redactó la IA, y por defecto asume reglas", async () => {
+    const { attachAiOrigin } = await import("../src/application/mailbox");
+    const emails = [{ id: "a" }, { id: "b" }];
+    const origins = new Map([["a", { aiUsed: true, aiModel: "@cf/meta/llama-3.3-70b-instruct-fp8-fast" }]]);
+    const r = attachAiOrigin(emails, origins);
+    expect(r[0]).toMatchObject({ id: "a", aiUsed: true, aiModel: "@cf/meta/llama-3.3-70b-instruct-fp8-fast" });
+    expect(r[1]).toMatchObject({ id: "b", aiUsed: false, aiModel: null }); // sin registro: nunca se atribuye a la IA
+  });
+});

@@ -1,6 +1,6 @@
 // [CAPA 2 — APLICACIÓN] Buzón institucional (PR G3): listar, simular llegada y revisión humana.
 import type { AuditRepositoryPort } from "../domain/ports";
-import type { EmailInput, Folder, ReviewStatus, RiskLevel } from "../domain/types";
+import type { AiOrigin, EmailInput, Folder, ReviewStatus, RiskLevel } from "../domain/types";
 import type { MailAnalyzer } from "./interimAnalyzer";
 
 export interface MailboxEmail {
@@ -28,6 +28,14 @@ export async function listMailbox(view: MailboxView, store: MailboxStorePort) {
   const pending = all.filter((e) => e.reviewStatus === "PENDING");
   const emails = view === "ALL" ? all : view === "PENDING" ? pending : all.filter((e) => e.folder === view);
   return { folder: view, counts, total: all.length, pending: pending.length, emails };
+}
+
+/**
+ * Une a cada correo el origen de su explicación (IA o reglas), tomado del análisis registrado en la bitácora.
+ * Sin registro, se asume análisis por reglas: la etiqueta nunca atribuye a la IA algo que no hizo.
+ */
+export function attachAiOrigin<T extends { id: string }>(emails: T[], origins: Map<string, AiOrigin>): (T & AiOrigin)[] {
+  return emails.map((e) => ({ ...e, ...(origins.get(e.id) ?? { aiUsed: false, aiModel: null }) }));
 }
 
 export interface DeliverDeps {
