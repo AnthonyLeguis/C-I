@@ -126,7 +126,7 @@ export async function analyzeEmail(
   const heuristics = analyzeHeuristics(email);
   // Inyección indirecta: el correo trae instrucciones dirigidas a un sistema de IA para manipular el dictamen.
   const injection = evaluateGuardRules(`${subjectSanitized}\n${bodySanitized}`).reasons.includes("PROMPT_INJECTION");
-  const injectionIndicator = { category: "INGENIERIA_SOCIAL" as const, text: "El correo contiene instrucciones dirigidas a un sistema de IA (intento de manipular el análisis)", weight: 25 };
+  const injectionIndicator = { category: "INGENIERIA_SOCIAL" as const, text: "El correo contiene instrucciones dirigidas a un sistema de IA (intento de manipular el análisis)", weight: 50 }; // por sí solo ya es malicioso: al menos ALTO → Spam
   const rulesScore = Math.min(100, heuristics.score + (injection ? injectionIndicator.weight : 0));
   // La señal de confianza (peso negativo) explica el score, pero no es un "hallazgo"
   // que deba mostrarse como amenaza ni contarse en el dashboard. Los textos se anonimizan antes de guardarse

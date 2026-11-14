@@ -8,24 +8,26 @@ interface PiiRule {
   mask: string;
 }
 
+// Límites con lookarounds (no ): el guion bajo cuenta como letra para  y dejaba sin tapar datos como
+// «Nomina_V-00.000.001.xlsm» (hallazgo de la auditoría QA).
 // El orden importa: la cuenta (20 dígitos) va primero para que sus fragmentos no se confundan con teléfonos o cédulas.
 const RULES: readonly PiiRule[] = [
   {
     type: "CUENTA_BANCARIA",
     // 20 dígitos que empiezan por 01 (código de banco), con o sin guiones/espacios: 0102-0000-00-0000000001
-    pattern: /\b01\d{2}[- ]?\d{4}[- ]?\d{2}[- ]?\d{10}\b/g,
+    pattern: /(?<![0-9])01\d{2}[- ]?\d{4}[- ]?\d{2}[- ]?\d{10}(?![0-9])/g,
     mask: "[CUENTA_BANCARIA_PROTEGIDA]",
   },
   {
     type: "TELEFONO",
     // Móviles venezolanos: 0412-0000000 · 0414 000 0000 · +58 424 0000000 · 584160000000
-    pattern: /(?:\+?58[- ]?|\b0)4(?:12|14|16|22|24|26)[- ]?\d{3}[- ]?\d{4}\b/g,
+    pattern: /(?:\+?58[- ]?|(?<![0-9])0)4(?:12|14|16|22|24|26)[- ]?\d{3}[- ]?\d{4}(?![0-9])/g,
     mask: "[TELEFONO_PROTEGIDO]",
   },
   {
     type: "CEDULA",
     // V-00.000.001 · E-00000001 · v 1234567 · V00000001 (7 u 8 dígitos, con o sin puntos)
-    pattern: /\b[VEve][- ]?\d{1,2}\.?\d{3}\.?\d{3}\b/g,
+    pattern: /(?<![A-Za-z0-9])[VEve][- ]?\d{1,2}\.?\d{3}\.?\d{3}(?![0-9])/g,
     mask: "[CEDULA_PROTEGIDA]",
   },
   {
