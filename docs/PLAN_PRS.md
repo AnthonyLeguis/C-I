@@ -37,7 +37,7 @@
 **Reglas:**
 1. Los desarrolladores **solo abren PR hacia `qa`**. Nunca hacia `development` ni `main`.
 2. Un PR entra a `qa` solo si el **CI está en verde** y **Anthony lo aprueba** (CODEOWNERS).
-3. Con `qa` desplegado, Anthony corre el **agente QA** (Sección 4). Si aprueba → PR `qa → development`. Si no → se revierte el PR culpable en `qa` y se devuelve al autor.
+3. **Promoción automática:** cuando `qa` se despliega y su prueba de humo pasa, el workflow `promote-qa` abre y une solo el PR `qa → development` y actualiza `timeline-qa`. Si algo falla en QA, no se promueve y se revierte el PR culpable en `qa`. El **agente QA con IA** se corre antes de cada release a `main`.
 4. `development → main` solo en los checkpoints con todo verde (release).
 5. Cada rama nueva de trabajo se crea **desde `qa` actualizado**: `git checkout qa && git pull && git checkout -b feat/<persona>-<tema>`.
 
