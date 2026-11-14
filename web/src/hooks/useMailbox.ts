@@ -1,4 +1,4 @@
-// Estado del Buzón (PR G5): vista, correos, selección, simular llegada y revisión humana.
+// Estado del Buzón (PR G5): vista, correos, correo abierto en el lector (null = listado), simular llegada y revisión humana.
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../services/apiClient";
 import type { DemoScenarioDto, MailboxResponse, MailboxView } from "../types/contracts";
@@ -29,7 +29,8 @@ export function useMailbox() {
     try {
       const d = await api.mailbox(v);
       setData(d); setError(null);
-      setSelectedId((cur) => (cur && d.emails.some((e) => e.id === cur) ? cur : d.emails[0]?.id ?? null));
+      // estilo Gmail: nada se abre solo; si el correo abierto ya no está en la carpeta, se vuelve al listado
+      setSelectedId((cur) => (cur && d.emails.some((e) => e.id === cur) ? cur : null));
     } catch (e: unknown) { setError(e instanceof Error ? e.message : "Error"); }
   }, [view]);
 
@@ -48,8 +49,8 @@ export function useMailbox() {
       const r = await api.deliver(caseId);
       setView("ALL");
       const d = await api.mailbox("ALL");
-      setData(d); setSelectedId(r.email_id); setFreshId(r.email_id);
-      window.setTimeout(() => setFreshId(null), 1500);
+      setData(d); setSelectedId(null); setFreshId(r.email_id); // el correo nuevo entra al listado con destello
+      window.setTimeout(() => setFreshId(null), 2200);
       return r;
     } finally { setBusy(false); }
   }, []);
