@@ -2,6 +2,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AppEnv } from "../env";
+import { effectiveAi } from "../infrastructure/systemSettings";
 import { DEMO_SCENARIOS, findScenario } from "../application/demoScenarios";
 import { analyzeEmail } from "../application/analyzeEmail";
 import type { MailAnalyzer } from "../application/interimAnalyzer";
@@ -18,7 +19,7 @@ const View = z.enum(["ALL", "PENDING", "INBOX", "SPAM", "QUARANTINE"]).default("
 const DeliverRequest = z.object({ case_id: z.string().min(1) });
 const ReviewRequest = z.object({ decision: z.enum(["CONFIRM", "RESTORE"]) });
 
-function storeFor(db: D1Database): MailboxStorePort {
+export function storeFor(db: D1Database): MailboxStorePort {
   return {
     findByFolder: (f) => emailRepository.findByFolder(db, f),
     findById: (id) => emailRepository.findById(db, id),
@@ -85,7 +86,7 @@ mailboxRoutes.post("/deliver", requireRole("ANALYST") as never, async (c) => {
   if (!scenario) return c.json({ error: "Escenario no encontrado." }, 404);
   const result = await deliverEmail(scenario.email, {
     store: storeFor(c.env.DB), audit: new AuditRepository(c.env.DB),
-    analyze: w4Analyzer(c.env.AI),
+    analyze: w4Analyzer(await effectiveAi(c.env)),
     sanitize: (t) => sanitizePii(t).sanitized, newId: () => crypto.randomUUID(), now: () => new Date(),
     isBlocked: (d) => domainStoreFor(c.env.DB).isBlocked(d),
   });
