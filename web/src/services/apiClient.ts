@@ -1,7 +1,7 @@
 // ÚNICO archivo del frontend donde se permite fetch(). Archivo compartido: solo lo modifica Anthony.
 import type {
   AnalyzeRequest, AnalyzeResponse, AskResponse, DashboardResponse, DeliverResponse, DemoScenarioDto, DemoUser, HealthResponse, MailboxResponse,
-  BlockedDomainDto, MailboxView, ReviewResponse, TimelineQaResponse, User,
+  AuditEventsResponse, BlockedDomainDto, MailboxView, ReviewResponse, TimelineQaResponse, User,
 } from "../types/contracts";
 
 export class ApiClientError extends Error {
@@ -43,6 +43,10 @@ export const api = {
   blockDomain: (domain: string, emailId: string | null = null) => post<{ domain: string; audit_hash: string }>("/domains/block", { domain, email_id: emailId ?? undefined }),
   blockedDomains: () => request<{ domains: BlockedDomainDto[] }>("/domains/blocked"),
   unblockDomain: (domain: string) => request<{ domain: string; audit_hash: string }>(`/domains/blocked/${encodeURIComponent(domain)}`, { method: "DELETE" }),
+  auditEvents: (f: { module?: string; level?: string; q?: string }) => {
+    const p = new URLSearchParams(Object.entries(f).filter(([, v]) => v) as [string, string][]);
+    return request<AuditEventsResponse>(`/audit/events?${p.toString()}`);
+  },
   /** URL directa de descarga (el navegador envía la cookie de sesión). */
   auditCsvUrl: "/api/v1/audit/export.csv",
   dashboard: () => request<DashboardResponse>("/dashboard"),

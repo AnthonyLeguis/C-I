@@ -64,6 +64,11 @@ export interface MailboxResponse { folder: MailboxView; counts: Record<Folder, n
 export interface DemoScenarioDto { id: string; label: string }
 export interface DeliverResponse { email_id: string; audit_hash: string }
 export interface BlockedDomainDto { domain: string; reason: string; blocked_by: string; email_id: string | null; created_at: string }
+export interface AuditEventDto {
+  id: string; created_at: string; module: string; actor: string; risk_level: RiskLevel | null; risk_score: number | null;
+  action_taken: string; email_id: string | null; xai_explanation: string | null; ai_used: boolean; ai_model: string | null; prev_hash: string | null; hash: string;
+}
+export interface AuditEventsResponse { total: number; events: AuditEventDto[] }
 export interface DemoUser { username: string; display_name: string; role: Role }
 export interface ReviewResponse { email_id: string; review_status: ReviewStatus; folder: Folder; audit_hash: string }
 
