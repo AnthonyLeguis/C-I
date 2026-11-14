@@ -91,8 +91,10 @@ export function buildDashboard({ emails, audit, chainOk, now }: DashboardInput) 
     return { hour: start.toISOString(), total: inHour.length, threats: inHour.filter((e) => e.riskLevel === "HIGH" || e.riskLevel === "CRITICAL").length };
   });
 
-  const recentAi = audit.find((a) => now.getTime() - Date.parse(a.createdAt) <= 5 * 60_000 && (a.module === "MAIL_ANALYZER" || a.module === "ASSISTANT_GUARD"));
-  const aiStatus = recentAi ? (recentAi.aiUsed ? "ONLINE" : "FALLBACK") : "UNKNOWN";
+  // Estado de IA: ONLINE si la IA respondió en los últimos 5 min; FALLBACK solo si hubo análisis de correo
+  // sin IA (un bloqueo del guardián por reglas no usa IA y no significa que la IA esté caída).
+  const recent = audit.filter((a) => now.getTime() - Date.parse(a.createdAt) <= 5 * 60_000);
+  const aiStatus = recent.some((a) => a.aiUsed) ? "ONLINE" : recent.some((a) => a.module === "MAIL_ANALYZER" && !a.aiUsed) ? "FALLBACK" : "UNKNOWN";
 
   return {
     generated_at: now.toISOString(),
