@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+/* Tokens oficiales de C&I (PLAN_UX.md §2). Alejandro (PR X1) agrega fuentes locales y el resto del tema. */
+@theme {
+  --color-primary: #0b2545;
+  --color-primary-accent: #134074;
+  --color-secondary: #00a8e8;
+  --color-bg: #f4f6f9;
+  --color-surface: #ffffff;
+  --color-console: #0d1b2a;
+  --color-text: #1b263b;
+  --color-text-muted: #5c6b73;
+  --color-border: #dde3ea;
+
+  --color-safe: #1e8449;
+  --color-safe-bg: #eafaf1;
+  --color-low: #1f618d;
+  --color-low-bg: #ebf5fb;
+  --color-high: #b7950b;
+  --color-high-bg: #fef9e7;
+  --color-critical: #922b21;
+  --color-critical-bg: #fdedec;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
