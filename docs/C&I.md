@@ -302,8 +302,13 @@ CREATE INDEX idx_audit_created ON audit_events(created_at DESC);
 | `GET /dashboard`                                                             | ANALYST          | Gabriel                                  |
 | `POST /assistant/ask`                                                        | ANALYST          | Anthony                                  |
 | `GET /audit/verify` (verifica la cadena de hashes)                           | ADMIN            | Gabriel                                  |
+| `POST /auth/quick-login` `{ "username": "jrios" }` (solo usuarios demo) | público | Gabriel (G1) |
+| `POST /mailbox/:id/approve` · `POST /mailbox/:id/escalate` | ANALYST / ANALYST | Gabriel (G7) |
+| `POST /domains/block` · `GET /domains/blocked` · `DELETE /domains/blocked/:domain` | SUPERVISOR | Gabriel (G7) |
+| `GET /audit/export.csv` | SUPERVISOR | Gabriel (G7) |
+| `GET /support/status` · `POST /support/mode` · `POST /support/reset-demo` | ADMIN | Anthony (A6) |
 
-Jerarquía de roles: `ADMIN` ⊃ `SUPERVISOR` ⊃ `ANALYST`.
+Jerarquía de roles: `ADMIN` ⊃ `SUPERVISOR` ⊃ `ANALYST`. En pantalla (prototipo de Alejandro): **Master / Soporte Técnico** ⊃ **Gerente de Seguridad (CISO)** ⊃ **Analista de Seguridad**.
 
 **¿Quién es quién? (roles del sistema)**
 

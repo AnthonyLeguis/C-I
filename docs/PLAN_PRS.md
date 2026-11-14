@@ -148,6 +148,7 @@ Después del merge, para el siguiente PR: volver al primer comando con un nombre
 | **A2** 🧱 | `feat/anthony-ai-gateway` | `WorkersAiGateway` (GLM-4.7 Flash + Llama Guard 3, timeout, fallback) + tests con IA simulada | A0 | CP1 | CA6: responde < 1 s si la IA falla |
 | **A3** | `feat/anthony-ethics-guard` | `ethicsGuard.ts` (inyección + peticiones ofensivas), `assistant.ts`, `POST /assistant/ask` real | A1, A2 | CP2 | CA7: bloquea y registra en bitácora |
 | **A4** | `feat/anthony-assistant-ui` | `pages/Assistant.tsx` + `components/assistant/*` (usa el kit de UI de X2) | A3, X2 | CP3 | Vista pregunta/respuesta con badge IA y bloqueo visible |
+| **A6** | `feat/anthony-support-console` | Consola de Soporte (solo Master): `GET /support/status` (IA, D1, modo), `POST /support/mode` (en línea ↔ solo reglas), `POST /support/reset-demo` (restaura seed), página `/soporte` con la lista de dominios bloqueados (usa G7) | A3, G7, X2 | CP4 | Cambiar a modo reglas apaga la IA sin romper nada; restablecer deja la demo en estado inicial |
 | **A5** | `feat/anthony-docs` | `SPEC.md` final, sección técnica del README, declaración de IA | todos | CP5 | Checklist del evento completo |
 
 ### 2.2 Williams — M1 Motor de correo y marco legal
@@ -164,12 +165,13 @@ Después del merge, para el siguiente PR: volver al primer comando con un nombre
 
 | PR | Rama | Contenido | Depende de | ⏱️ | ✅ Criterio |
 |---|---|---|---|---|---|
-| **G1** 🧱 | `feat/gabriel-auth` | `hash.ts` (PBKDF2 + SHA-256), `auth.ts` (cookie HMAC, `requireRole`), `0002_demo_users.sql`, `/auth/login · logout · me` + tests | A0 | CP1 | Login de los 3 roles; 401 sin sesión |
+| **G1** 🧱 | `feat/gabriel-auth` | `hash.ts` (PBKDF2 + SHA-256), `auth.ts` (cookie HMAC, `requireRole`), `0002_demo_users.sql` con `jrios` (ANALYST), `svalenzuela` (SUPERVISOR = CISO), `cmendoza` (ADMIN = Master), `/auth/login · logout · me` + `POST /auth/quick-login` (entrada en 1 clic por perfil, solo usuarios demo) + tests | A0 | CP1 | Login de los 3 roles; 401 sin sesión |
 | **G2** 🧱 | `feat/gabriel-repos` | `d1Repos.ts` (correos + bitácora con hash encadenado) + `GET /audit/verify` | A0 | CP1 | CA8: detecta un registro alterado |
 | **G3** | `feat/gabriel-mailbox-api` | `mailbox.ts` + `GET /mailbox`, `POST /mailbox/deliver`, `POST /mailbox/:id/review` | G1, G2, W4 | CP2 | CA5: ANALYST recibe 403 al restaurar |
 | **G4** | `feat/gabriel-dashboard-api` | `dashboard.ts` + `GET /dashboard` con **todos** los campos de `PLAN_UX.md` §4 | G2 | CP2 | Contrato del dashboard completo |
-| **G5** | `feat/gabriel-login-mailbox-ui` | `pages/Login.tsx`, `pages/Mailbox.tsx`, `components/mailbox/*`, hooks | G1, G3, X2 | CP3 | Flujo completo: llegar → cuarentena → confirmar/restaurar |
+| **G5** | `feat/gabriel-login-mailbox-ui` | `pages/Login.tsx` (perfiles en 1 clic + formulario, como el prototipo), `pages/Mailbox.tsx` (pestañas con Pendientes, buscador, simulador de escenario, contenido difuminado), `components/mailbox/*`, hooks | G1, G3, X2 | CP3 | Flujo completo: llegar → cuarentena → confirmar/restaurar |
 | **G6** | `feat/gabriel-dashboard-ui` | `pages/Dashboard.tsx`, `components/dashboard/*` según `PLAN_UX.md` §4 | G4, X2 | CP4 | KPI, gráficos y tabla con datos reales |
+| **G7** | `feat/gabriel-actions` | Acciones del prototipo: `POST /mailbox/:id/escalate` (Escalar a CISO, estado `ESCALATED`), `POST /mailbox/:id/approve` (Marcar seguro), `POST /domains/block` · `GET /domains/blocked` · `DELETE /domains/blocked/:domain` (lista corporativa), migración `0003_actions.sql` (tabla `blocked_domains` y estado `ESCALATED`), `GET /audit/export.csv`; todo registrado en bitácora | G2, G3 | CP3 | Cada acción cambia el estado, aparece en la bitácora y respeta el rol (escalar/bloquear: CISO o Master) |
 
 ### 2.4 UX/UI — Alejandro diseña, los desarrolladores implementan
 
@@ -190,8 +192,8 @@ Después del merge, para el siguiente PR: volver al primer comando con un nombre
 
 | PR | Responsable | Rama | Contenido | Depende de | ⏱️ | ✅ Criterio |
 |---|---|---|---|---|---|---|
-| **X0** | Anthony | `feat/anthony-design-docs` | Subir a `docs/design/` los bocetos y archivos que Alejandro envía por chat | D0 | CP0 | Bocetos visibles en el repo |
-| **X1** 🧱 | Anthony | `feat/anthony-tokens` | `styles/index.css` (tema completo), fuentes Inter y JetBrains Mono locales, iconos Lucide | A0, D0 | CP1 | Colores y tipografía de `PLAN_UX.md` §2 |
+| **X0** ✅ | Anthony | `feat/anthony-design-docs` | Subir a `docs/design/prototipo/` las 14 capturas del prototipo de Alejandro (NotebookLM) | D0 | CP0 | Capturas visibles en el repo |
+| **X1** 🧱 | Anthony | `feat/anthony-tokens` | `styles/index.css` con la paleta de `Dashboard_RC` en **claro y oscuro** (`PLAN_UX.md` §2.1), botón de tema, fuentes Inter y JetBrains Mono locales, iconos Lucide | A0, D0 | CP1 | Colores y tipografía de `PLAN_UX.md` §2 |
 | **X2** 🧱 | Anthony | `feat/anthony-ui-kit` | `components/ui/*`: Button, Card, AlertBadge, RiskMeter, FolderBadge, ReviewBadge, AiBadge, KpiCard, Topbar, Sidebar, EmptyState, ErrorState, Skeleton | X1, D1 | CP2 | Página `/ui` de muestra con todos los componentes y estados |
 | **X3** | **Williams** | `feat/williams-analyzer-ui` | `pages/Analyzer.tsx` + `components/analyzer/*` (formulario + dictamen) | X2, W4 | CP3 | Dictamen separado en Riesgo · Indicadores · Legal · Acción |
 | **X4** | Gabriel + Anthony | `feat/gabriel-polish` / `feat/anthony-polish` | Estados vacíos, carga y error; responsive; modo proyector; accesibilidad; ajustes de D2 | G5, G6, X3, D2 | CP5 | Checklist de `PLAN_UX.md` §8 + visto bueno de Alejandro |
