@@ -1,5 +1,7 @@
 # 🎨 C&I — Plan de UX/UI (Alejandro Sánchez)
 
+> **Flujo:** Alejandro diseña con este plan y envía todo por el **chat interno** (no usa GitHub). Anthony sube los diseños a `docs/design/`. Lo implementan: Anthony (tema y componentes), Williams (Analizador), Gabriel (Login, Buzón, Panel, Bitácora) y Anthony (Asistente). Ver `PLAN_PRS.md` §2.4.
+
 > Complemento de [C&I.md](C%26I.md) y [PLAN_PRS.md](PLAN_PRS.md). Es la **especificación visual**: Gabriel, Williams y Anthony construyen sus pantallas con estas reglas, y el agente QA las verifica.
 
 ---
@@ -15,21 +17,60 @@
 
 ---
 
+## 1.1 Regla obligatoria de movimiento: interfaz fluida, con animaciones empresariales y dinámicas
+
+**Todo elemento del frontend debe sentirse fluido.** Las animaciones son sobrias (estilo banca/SaaS empresarial), rápidas y con propósito: guían la atención, nunca la distraen. El agente QA lo revisa en cada PR de pantallas.
+
+| Elemento | Animación obligatoria | Duración / curva |
+|---|---|---|
+| Cambio de pantalla | Fundido + desplazamiento corto hacia arriba (8 px) | 220 ms · `cubic-bezier(.16,1,.3,1)` |
+| Tarjetas y listas al cargar | Aparición escalonada (cada ítem 40 ms después del anterior) | 260 ms |
+| KPI (números) | Conteo animado de 0 al valor | 600 ms · ease-out |
+| `RiskMeter` | La barra se llena y el marcador ▲ se desliza hasta el puntaje | 700 ms · ease-out |
+| Hover en tarjetas y filas | Elevación sutil (sombra + `translateY(-1px)`) | 150 ms |
+| Botones | Presión al hacer clic (`scale(.98)`) y foco visible | 120 ms |
+| Correo nuevo en el buzón ("Simular llegada") | Entra deslizándose + destello del color de su nivel | 400 ms |
+| Cambio de carpeta (cuarentena ↔ bandeja) | El ítem sale con fundido y el contador se actualiza animado | 250 ms |
+| Menú lateral | Deslizamiento con fondo oscurecido | 240 ms |
+| Toasts ("Decisión registrada…") | Entran desde abajo a la derecha y se van solos a los 4 s | 250 ms |
+| Carga de datos | *Skeleton* con brillo que recorre (nunca un spinner solo) | 1,2 s en bucle |
+| Cambio de tema claro/oscuro | Transición de colores | 400 ms |
+| Indicadores en vivo (IA en línea, pendientes) | Pulso suave | 1,6 s en bucle |
+
+**Reglas técnicas:**
+- Animar solo `transform` y `opacity` (y colores en el cambio de tema): nunca `width`, `height` ni `top`, para mantener 60 fps.
+- Nada de rebotes, giros ni efectos llamativos: el tono es institucional.
+- Ninguna animación bloquea la interacción ni dura más de 700 ms (salvo los bucles de carga y pulso).
+- **Accesibilidad:** con `prefers-reduced-motion` todo se desactiva (ya está en `styles/index.css`).
+- Diseño **responsive y fluido**: de 390 px (teléfono) a 1920 px (proyector), sin scroll horizontal; tipografía y espaciados escalan con el ancho.
+- Las utilidades compartidas (`animate-enter`, `stagger`, `CountUp`, `Skeleton`, `PageTransition`) las crea **Anthony en X2**; nadie escribe animaciones propias fuera de ellas.
+
 ## 2. Sistema de diseño
 
-### 2.1 Colores (tokens)
+### 2.1 Colores (tokens) — paleta oficial basada en `Dashboard_RC` (actualizada 13/11)
 
-| Token | Hex | Uso |
-|---|---|---|
-| `--primary` | `#0B2545` | Sidebar, encabezados, botón primario |
-| `--primary-accent` | `#134074` | Hover, elemento activo |
-| `--secondary` | `#00A8E8` | Análisis en curso, enlaces, gráficos |
-| `--bg` | `#F4F6F9` | Fondo |
-| `--surface` | `#FFFFFF` | Tarjetas, tablas |
-| `--console` | `#0D1B2A` | Bitácora / hashes |
-| `--text` | `#1B263B` | Texto principal |
-| `--text-muted` | `#5C6B73` | Metadatos y fechas |
-| `--border` | `#DDE3EA` | Bordes de tarjetas |
+> **Decisión:** se adopta la escala de colores de `Dashboard_RC` (verde de marca, fondos salvia, tinta pizarra, contrastes validados) en **modo claro y oscuro**. El **azul marino del logo** (`#0B2545`) se conserva en el menú lateral y el **cian del logo** (`#00A8E8`) en los indicadores de IA, para que app y logo combinen.
+> Cada token apunta a una variable que se redefine por tema: los componentes usan `bg-surface`, `text-ink`, etc., y el tema cambia sin tocar el marcado.
+
+| Token | Claro | Oscuro | Uso |
+|---|---|---|---|
+| `--page` | `#e7f0ea` | `#020617` | Fondo general |
+| `--surface` | `#f4faf6` | `#0f172a` | Tarjetas, tablas, paneles |
+| `--surface-2` | `#eaf3ed` | `#16203a` | Inputs, superficies secundarias |
+| `--line` / `--line-strong` | `#d6e6db` / `#c0d5c7` | `#1e293b` / `#334155` | Bordes |
+| `--ink` | `#0f172a` | `#f1f5f9` | Texto principal |
+| `--ink-2` | `#334155` | `#cbd5e1` | Texto secundario |
+| `--ink-muted` | `#64748b` | `#94a3b8` | Metadatos y fechas |
+| `--brand` | `#008542` | `#00b050` | Botón primario, foco, elemento activo |
+| `--on-brand` | `#ffffff` | `#04140a` | Texto sobre `--brand` |
+| `--brand-soft` | `#e6f7ee` | `rgba(0,176,80,.16)` | Fondos suaves de marca |
+| `--sidebar` (logo) | `#0B2545` | `#0B2545` | Menú lateral (texto blanco) |
+| `--ai` (logo) | `#0077a8` (cian del logo oscurecido para contraste AA) | `#00A8E8` | Badge "Generado por IA", análisis en curso |
+| `--console` | `#0f172a` | `#020617` | Bitácora / hashes |
+
+Gráficos (series categóricas): `#2a78d6 · #1baf7a · #eda100 · #008300 · #4a3aa7 · #e34948 · #e87ba4 · #eb6834` (claro) y `#3987e5 · #199e70 · #c98500 · #008300 · #9085e9 · #e66767 · #d55181 · #d95926` (oscuro).
+
+Botón de tema (sol/luna) en el Topbar; al cambiar, transición suave de 0,4 s (respetar `prefers-reduced-motion`). Tema por defecto: **claro**; recordar la elección en `localStorage`.
 
 ### 2.2 Tipografía y espaciado
 
@@ -51,14 +92,16 @@ Espaciado en múltiplos de 8 px · padding de tarjeta 24 px · separación 16 px
 
 ### 3.1 Nivel de riesgo del correo
 
-| Nivel (API) | Etiqueta | Score | Color texto / fondo / borde | Icono Lucide | Acción automática | Mensaje corto |
-|---|---|---|---|---|---|---|
-| `SAFE` | **SEGURO** | 0–19 | `#1E8449` / `#EAFAF1` / `#27AE60` | `ShieldCheck` | Queda en **Bandeja** | "Sin señales de amenaza" |
-| `LOW` | **BAJO** | 20–49 | `#1F618D` / `#EBF5FB` / `#5DADE2` | `Info` | Queda en **Bandeja** con aviso | "Revise con atención antes de responder" |
-| `HIGH` | **ALTO** | 50–79 | `#B7950B` / `#FEF9E7` / `#F1C40F` | `AlertTriangle` | Va a **Spam** | "Posible phishing: no abra enlaces ni adjuntos" |
-| `CRITICAL` | **CRÍTICO** | 80–100 | `#922B21` / `#FDEDEC` / `#E74C3C` | `ShieldAlert` | Va a **Cuarentena** + revisión humana | "Amenaza confirmada por reglas: aislado" |
+| Nivel (API) | Etiqueta | Score | Color claro (texto / fondo) | Color oscuro (texto) | Icono Lucide | Acción automática | Mensaje corto |
+|---|---|---|---|---|---|---|---|
+| `SAFE` | **SEGURO** | 0–19 | `#0a8f34` / `#e6f7ee` | `#0ca30c` | `ShieldCheck` | Queda en **Bandeja** | "Sin señales de amenaza" |
+| `LOW` | **BAJO** | 20–49 | `#2a78d6` / `#ebf3fd` | `#3987e5` | `Info` | Queda en **Bandeja** con aviso | "Revise con atención antes de responder" |
+| `HIGH` | **ALTO** | 50–79 | `#b7791f` / `#fdf3e1` | `#fab219` | `AlertTriangle` | Va a **Spam** | "Posible phishing: no abra enlaces ni adjuntos" |
+| `CRITICAL` | **CRÍTICO** | 80–100 | `#dc2626` / `#fdecec` | `#d03b3b` | `ShieldAlert` | Va a **Cuarentena** + revisión humana | "Amenaza detectada por reglas: aislado" |
 
-> Componente `AlertBadge level="CRITICAL"` → icono + "CRÍTICO" + color. `RiskMeter score={97}` → barra 0–100 con las 4 zonas de color y el número grande.
+Estado extra **ESCALADO A CISO**: color `--serious` (`#c2410c` claro / `#ec835a` oscuro), icono `ArrowUpRight`.
+
+> Componente `AlertBadge level="CRITICAL"` → icono + "CRÍTICO" + color. `RiskMeter score={97}` → barra 0–100 con las 4 zonas (verde, azul, ámbar, rojo) y un marcador ▲ en la posición del puntaje (como en el prototipo).
 
 ### 3.2 Carpeta del correo
 
@@ -81,7 +124,7 @@ Espaciado en múltiplos de 8 px · padding de tarjeta 24 px · separación 16 px
 
 | Caso | Badge | Color |
 |---|---|---|
-| `ai_used = true` | `Sparkles` "Explicación generada por IA · GLM-4.7 Flash" | cian `--secondary` |
+| `ai_used = true` | `Sparkles` "Explicación generada por IA · Llama 3.3 70B" | cian `--secondary` |
 | `ai_used = false` | `Cpu` "Análisis determinista (reglas)" | gris azulado |
 | Asistente bloqueado | `Ban` "Bloqueado por el guardián ético" | rojo |
 
@@ -164,18 +207,39 @@ Gabriel implementa **todos** estos campos (PR G4) y los dibuja (PR G6).
 
 ---
 
+## 4.2 Prototipo de Alejandro (fuente visual oficial)
+
+Prototipo interactivo en NotebookLM ("Especificación Visual del Sistema C&I"). Capturas en [`docs/design/prototipo/`](design/prototipo/). **Se construye siguiendo esas capturas**, con la paleta de §2.1.
+
+**Decisiones sobre lo que trae el prototipo:**
+
+| Elemento del prototipo | Decisión | Responsable |
+|---|---|---|
+| Login con **selección rápida de perfil (1 clic)** + formulario + credenciales de demostración visibles | ✅ Adoptado | Gabriel (G1, G5) |
+| Nombres de rol en pantalla: **Analista de Seguridad · Gerente de Seguridad (CISO) · Master / Soporte Técnico** | ✅ Adoptado (en el código siguen `ANALYST · SUPERVISOR · ADMIN`) | Todos |
+| Usuarios demo: `jrios` (Analista) · `svalenzuela` (CISO) · `cmendoza` (Master) | ✅ Adoptado (sintéticos) | Gabriel (G1) |
+| Panel: 4 KPI, casos prioritarios para triaje, conteo por nivel, entidades más suplantadas | ✅ Adoptado | Gabriel (G4, G6) |
+| Buzón: pestañas Todos/Bandeja/Spam/Cuarentena/**Pendientes**, buscador, selector de escenario + "Simular llegada", detalle con contenido difuminado y enlaces neutralizados | ✅ Adoptado | Gabriel (G3, G5) |
+| Analizador: expediente técnico + **acciones en 1 clic: Aprobar/Marcar seguro · Escalar a CISO · Bloquear dominio** + "Evaluar correo manual" | ✅ Adoptado | Williams (X3) + Gabriel (G7) |
+| Bitácora inmutable: sello "Cadena íntegra · N registros", Verificar integridad, filtros, **Exportar CSV** | ✅ Adoptado | Gabriel (G2, G6) |
+| **Consola de Soporte** (solo Master): estado del motor IA / D1 / correo, **cambiar a modo reglas**, **restablecer demo**, lista de dominios bloqueados | ✅ Adoptado | Anthony (A6) |
+| Badge "Explicación generada por IA · GLM-4.7 Flash" | ✏️ Cambia a **Llama 3.3 70B** (modelo real) | Todos |
+| **IP de origen, país, ASN y "dominio creado hace 48 horas"** | ❌ **Descartado del MVP**: requiere consultas externas (WHOIS/geolocalización); sin ellas serían datos inventados y rompe la regla "cero invención". Queda en el roadmap. | — |
+| Pantalla del **Asistente** | ⚠️ No está en el prototipo: se construye con §5.5 y el kit de componentes | Anthony (A4) |
+
 ## 5. Pantallas
 
 ### 5.1 Mapa de navegación y permisos por rol
 
-| Pantalla | Ruta | ANALYST | SUPERVISOR | ADMIN | Dueño |
+| Pantalla | Ruta | Analista (ANALYST) | CISO (SUPERVISOR) | Master (ADMIN) | Dueño |
 |---|---|---|---|---|---|
 | Login | `/login` | ✅ | ✅ | ✅ | Gabriel |
 | Panel | `/` | ✅ (sin cola de revisión) | ✅ | ✅ | Gabriel |
 | Buzón | `/buzon` | ✅ ver | ✅ ver + confirmar/restaurar | ✅ | Gabriel |
-| Analizador | `/analizar` | ✅ | ✅ | ✅ | Alejandro |
+| Analizador | `/analizar` | ✅ | ✅ | ✅ | Williams (diseño de Alejandro) |
 | Asistente | `/asistente` | ✅ | ✅ | ✅ | Anthony |
 | Bitácora | `/bitacora` | ❌ | ✅ ver | ✅ ver + verificar cadena | Gabriel |
+| Consola de Soporte | `/soporte` | ❌ | ❌ | ✅ | Anthony |
 
 Lo que el rol no permite **no se muestra** (no se deshabilita): el menú y los botones cambian según `GET /auth/me`.
 
@@ -206,7 +270,7 @@ Lo que el rol no permite **no se muestra** (no se deshabilita): el menú y los b
 - "Simular llegada de correo" despliega los 6 casos de `DEMO_CASES.md`. Al elegir uno se ve una animación corta de "Analizando…" (barra cian) y el correo aparece en su carpeta con un destello del color de su nivel. **Es el momento clave de la demo.**
 - Al confirmar o restaurar: toast "Decisión registrada en la bitácora · hash a3f9…".
 
-### 5.4 Analizador (pantalla de Alejandro)
+### 5.4 Analizador (diseño de Alejandro, código de Williams)
 
 ```text
 ┌ ENTRADA (50%) ───────────────────────────┐┌ DICTAMEN (50%) ───────────────────────────────┐
@@ -264,6 +328,8 @@ Lo que el rol no permite **no se muestra** (no se deshabilita): el menú y los b
 
 ## 8. Checklist de calidad visual (lo revisa el agente QA en X4)
 
+- [ ] Cumple la regla de movimiento §1.1: transiciones en pantallas, listas, KPI, medidor, hover y toasts; solo `transform`/`opacity`; nada supera 700 ms.
+
 - [ ] Contraste WCAG AA (texto ≥ 4.5:1; usar un verificador de contraste).
 - [ ] Todo se puede usar con teclado (Tab) y el foco se ve.
 - [ ] Iconos con `aria-label`; badges con texto, no solo color.
@@ -275,16 +341,17 @@ Lo que el rol no permite **no se muestra** (no se deshabilita): el menú y los b
 
 ---
 
-## 9. Entregables de Alejandro y horario
+## 9. Entregables de Alejandro y horario (por chat interno; ver D0–D5 en `PLAN_PRS.md` §2.4)
 
 | Hora | Entregable |
 |---|---|
-| Vie 23:00 (CP0) | **X0**: bocetos de Login, Panel, Buzón, Analizador, Asistente y Bitácora en `docs/design/` |
-| Sáb 01:00 (CP1) | **X1**: tokens y tema |
+| Vie 23:00 (CP0) | **D0**: bocetos de Login, Panel, Buzón, Analizador, Asistente y Bitácora (por chat) |
+| Sáb 01:00 (CP1) | **D1**: detalle de badges, RiskMeter, KPI, Topbar y Sidebar (por chat) |
 | Sáb 01:00–04:00 | 😴 **Descanso obligatorio** (presentador) |
-| Sáb 05:00 (CP3) | **X2 y X3**: kit de componentes y Analizador |
-| Sáb 10:00 (CP5) | **X4 y X5**: pulido, README y guion del pitch |
-| Sáb 12:00 (CP6) | **Deck y video** desde producción |
+| Sáb 05:00–10:00 | **D2**: revisión visual de cada pantalla en el entorno QA y lista de ajustes |
+| Sáb 08:00 (CP4) | **D5**: cifras del problema con fuente (con Williams) |
+| Sáb 10:00 (CP5) | **D3**: textos del README y guion del pitch |
+| Sáb 12:00 (CP6) | **D4**: deck y video desde producción |
 | Sáb 13:00–15:30 | Ensayos del pitch (mínimo 5) |
 
 ### 9.1 Deck (6–8 diapositivas)
@@ -293,9 +360,9 @@ Lo que el rol no permite **no se muestra** (no se deshabilita): el menú y los b
 2. Problema: el correo como puerta de entrada + cifras con fuente.
 3. Solución: C&I en una frase + las 3 acciones (detecta, aísla, explica).
 4. Demo (captura o video corto de respaldo).
-5. IA responsable: reglas deciden, IA explica, PII protegida, revisión humana.
+5. IA responsable: cómo se calcula el puntaje (reglas 70 % + IA 30 %), PII protegida, revisión humana.
 6. Arquitectura: Cloudflare (Workers, D1, Workers AI) + SDD.
-7. Roadmap: conexión a correo real + versión on-premise con IA local.
+7. **Instalable dentro del banco:** el mismo sistema en un contenedor sin internet, con IA local (datos que nunca salen de la institución) + conexión al correo real del banco.
 8. Equipo C&I.
 
 ### 9.2 Video (2–3 min)

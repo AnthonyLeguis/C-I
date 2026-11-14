@@ -12,7 +12,7 @@
 | **Anthony Leguisamo** | Desarrollador · Líder técnico | M0 — Núcleo, IA, guardián ético, CI/CD, despliegue e integración |
 | **Williams Mejía**    | Desarrollador                 | M1 — Motor de análisis de correo + marco legal venezolano        |
 | **Gabriel Flores**    | Desarrollador                 | M2 — Buzón institucional, cuarentena, roles (RBAC) y panel       |
-| **Alejandro Sánchez** | UX/UI                         | M3 — Sistema de diseño, pantallas, deck, video y pitch           |
+| **Alejandro Sánchez** | UX/UI (sin GitHub: entrega por chat interno) | M3 — Diseño de pantallas y componentes, deck, video y pitch |
 
 ---
 
@@ -118,7 +118,7 @@ Fuentes: web del evento, `/agente-spec`, `/en-vivo`, `/remoto` y _Manual de desp
 
 - "**Williams**: el cerebro que analiza el correo y el catálogo legal (SUDEBAN, Ley de Delitos Informáticos), porque conoce la normativa."
 - "**Gabriel**: el buzón con sus carpetas, el inicio de sesión con roles y el panel de indicadores."
-- "**Alejandro**: el diseño de todas las pantallas con la guía de estilos de Williams; después el deck, el video y el pitch."
+- "**Alejandro**: diseña todas las pantallas con la guía de estilos y nos las manda por el chat interno; Anthony y Williams las convierten en código. Después hace el deck, el video y el pitch."
 - "**Yo**: la base del proyecto, la IA, el guardián ético, las pruebas automáticas y la publicación."
 
 **Min 11–15 · Reglas**
@@ -136,7 +136,7 @@ Fuentes: web del evento, `/agente-spec`, `/en-vivo`, `/remoto` y _Manual de desp
 - [ ] Node 20+ y Git instalados (`node -v`, `git --version`).
 - [ ] Repo clonado, `npm install` y `npm run check` en verde.
 - [ ] Su orden de trabajo abierta (Sección 5.3).
-- [ ] Alejandro: además, acceso al repo para editar `web/` y la carpeta `docs/`.
+- [ ] Alejandro: no necesita GitHub ni instalar nada; entrega sus diseños y textos por el chat interno (`PLAN_PRS.md` §2.4).
 
 ---
 
@@ -148,7 +148,7 @@ Fuentes: web del evento, `/agente-spec`, `/en-vivo`, `/remoto` y _Manual de desp
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | API               | **Cloudflare Workers + Hono** (TypeScript estricto)                                                                                                                                            | Recomendado por el evento, gratis, despliegue en segundos                                        |
 | Base de datos     | **Cloudflare D1** (SQLite)                                                                                                                                                                     | Buzón, usuarios y bitácora                                                                       |
-| IA                | **Workers AI**: `@cf/zai-org/glm-4.7-flash` (explicaciones y asistente) + `@cf/meta/llama-guard-3-8b` (peticiones ofensivas o inyección). Respaldo: `@cf/meta/llama-3.3-70b-instruct-fp8-fast` | Verificados el 12/11. ⚠️ `llama-3.1-8b-instruct` **está retirado**, aunque el manual lo mencione |
+| IA                | **Workers AI**: `@cf/meta/llama-3.3-70b-instruct-fp8-fast` (explicaciones y asistente; respaldo `@cf/meta/llama-4-scout-17b-16e-instruct`) + `@cf/meta/llama-guard-3-8b` (peticiones ofensivas o inyección). Respaldo: `@cf/meta/llama-3.3-70b-instruct-fp8-fast` | Verificados el 12/11. ⚠️ `llama-3.1-8b-instruct` **está retirado**, aunque el manual lo mencione |
 | Frontend          | **Vite + React + TypeScript + Tailwind + Lucide**, servido como _Static Assets_ del Worker                                                                                                     | Una sola URL, sin CORS                                                                           |
 | Seguridad         | Contraseñas con **PBKDF2 (WebCrypto)**, sesión firmada con **HMAC** en cookie `HttpOnly`, roles en cada endpoint                                                                               | Sin librerías pesadas                                                                            |
 | Respaldo          | Motor determinista (reglas) si la IA falla o se agota la cuota                                                                                                                                 | La demo nunca se cae                                                                             |
@@ -170,6 +170,41 @@ Correo entrante (buzón demo o pegado)
   ──► [8] Bitácora en D1 con hash SHA-256 del evento
 ```
 
+### 4.2.1 Cómo se calcula el puntaje (score) de riesgo
+
+El puntaje va de **0 a 100** y se arma en 3 pasos. Williams implementa los pesos en `emailHeuristics.ts` (W3); estos son los **pesos de referencia** (se pueden ajustar con los casos de prueba, documentando el cambio):
+
+**Paso 1 · Puntaje de reglas** (suma de indicadores encontrados, con tope de 100):
+
+| Indicador | Categoría | Peso |
+|---|---|---|
+| Dominio que imita a una entidad oficial (SUDEBAN, un banco) sin ser el oficial | Remitente | +35 |
+| Adjunto peligroso (.exe, .js, .scr, macros) o con doble extensión (`.pdf.exe`) | Adjuntos | +30 |
+| Pide claves, usuario o datos de acceso | Ingeniería social | +25 |
+| Pide transferencia urgente o cambio de cuenta de un proveedor (fraude del CEO) | Ingeniería social | +25 |
+| Autenticación fallida: DMARC o SPF en `fail` | Autenticación | +20 |
+| Enlace a dominio falso, IP en vez de dominio, o acortador | Enlaces | +20 |
+| Texto del enlace distinto a su destino real | Enlaces | +15 |
+| Reply-To distinto al remitente o de correo gratuito | Remitente | +15 |
+| Urgencia o amenaza ("último aviso", "suspensión", "24 horas") | Ingeniería social | +15 |
+| Nombre visible que no coincide con el dominio | Remitente | +10 |
+| Autenticación ausente: DKIM/SPF en `none` | Autenticación | +10 |
+| Remitente del dominio oficial con SPF, DKIM y DMARC en `pass` | Confianza | −20 |
+
+**Paso 2 · Puntaje de la IA:** la IA recibe el correo **ya anonimizado** y estima de 0 a 100 qué tan probable es que sea ingeniería social.
+
+**Paso 3 · Fusión ("las reglas deciden, la IA explica"):**
+
+```
+Puntaje final = Reglas × 0,7 + IA × 0,3        (si la IA no responde: Puntaje final = Reglas)
+```
+
+**Paso 4 · Nivel y acción:** 0–19 SEGURO (bandeja) · 20–49 BAJO (bandeja con aviso) · 50–79 ALTO (spam) · 80–100 CRÍTICO (cuarentena + revisión humana).
+
+**Ejemplo (falso correo de SUDEBAN):** dominio que imita (35) + adjunto `.pdf.exe` (30) + pide clave (25) + DMARC fail (20) + Reply-To gmail (15) + urgencia (15) = 140 → **tope 100**. La IA estima 90. Final = 100 × 0,7 + 90 × 0,3 = **97 → CRÍTICO → cuarentena**.
+
+> Por qué la IA pesa solo 30 %: las reglas son verificables y siempre dan el mismo resultado; la IA ayuda a captar matices del lenguaje, pero nunca puede, por sí sola, mandar un correo legítimo a cuarentena ni sacar uno peligroso de ella.
+
 ### 4.3 Estructura del repositorio (`c-i/`)
 
 ```text
@@ -190,18 +225,18 @@ c-i/
 │   └── presentation/  mailRoutes.ts (Williams) · mailboxRoutes.ts · authRoutes.ts · dashboardRoutes.ts (Gabriel) · assistantRoutes.ts (Anthony)
 ├── test/              emailHeuristics.test.ts (Williams) · auth.test.ts · mailbox.test.ts (Gabriel) · pii.test.ts · guard.test.ts (Anthony)
 ├── web/src/
-│   ├── styles/tokens.css            # Alejandro (guía de estilos)
+│   ├── styles/index.css             # Anthony (tema según el diseño de Alejandro)
 │   ├── types/contracts.ts · services/apiClient.ts · hooks/   # Anthony (contratos) / Gabriel (hooks)
 │   ├── components/
-│   │   ├── ui/          # Alejandro: Button, Card, Badge, RiskMeter, Topbar, Sidebar
-│   │   ├── analyzer/    # Alejandro (diseño) + Williams (datos)
+│   │   ├── ui/          # Anthony (diseño de Alejandro): Button, Card, Badge, RiskMeter, Topbar, Sidebar
+│   │   ├── analyzer/    # Williams (diseño de Alejandro)
 │   │   ├── mailbox/     # Gabriel
 │   │   ├── dashboard/   # Gabriel
 │   │   └── assistant/   # Anthony
 │   └── pages/  Login.tsx · Dashboard.tsx · Mailbox.tsx · Analyzer.tsx · Assistant.tsx
 ├── scripts/  guard.mjs · smoke.mjs
 ├── .github/  workflows/ci.yml · workflows/deploy.yml · protection.json
-└── docs/  DEMO_CASES.md · PITCH_SCRIPT.md · CHECKPOINTS.md · LEGAL_NOTES.md · design/ (capturas de Alejandro)
+└── docs/  DEMO_CASES.md · PITCH_SCRIPT.md · CHECKPOINTS.md · LEGAL_NOTES.md · design/ (diseños de Alejandro, subidos por Anthony)
 ```
 
 ### 4.4 Reglas inviolables
@@ -212,6 +247,7 @@ c-i/
 - **Datos 100 % sintéticos.** Dominios de demo: `banco-demo.com.ve` (legítimo) y variantes falsas. Los nombres de bancos reales solo aparecen en la **lista de dominios oficiales** para detectar imitaciones.
 - **Cero invención legal:** la IA nunca escribe números de artículo; los toma de `legalCatalog.ts`.
 - Cada respuesta indica `ai_used` y `ai_model`.
+- **Frontend fluido y animado:** toda pantalla y componente cumple la regla de movimiento de `PLAN_UX.md` §1.1 (animaciones empresariales, solo `transform`/`opacity`, ≤ 700 ms, `prefers-reduced-motion`) y es responsive de 390 a 1920 px.
 
 ---
 
@@ -267,8 +303,13 @@ CREATE INDEX idx_audit_created ON audit_events(created_at DESC);
 | `GET /dashboard`                                                             | ANALYST          | Gabriel                                  |
 | `POST /assistant/ask`                                                        | ANALYST          | Anthony                                  |
 | `GET /audit/verify` (verifica la cadena de hashes)                           | ADMIN            | Gabriel                                  |
+| `POST /auth/quick-login` `{ "username": "jrios" }` (solo usuarios demo) | público | Gabriel (G1) |
+| `POST /mailbox/:id/approve` · `POST /mailbox/:id/escalate` | ANALYST / ANALYST | Gabriel (G7) |
+| `POST /domains/block` · `GET /domains/blocked` · `DELETE /domains/blocked/:domain` | SUPERVISOR | Gabriel (G7) |
+| `GET /audit/export.csv` | SUPERVISOR | Gabriel (G7) |
+| `GET /support/status` · `POST /support/mode` · `POST /support/reset-demo` | ADMIN | Anthony (A6) |
 
-Jerarquía de roles: `ADMIN` ⊃ `SUPERVISOR` ⊃ `ANALYST`.
+Jerarquía de roles: `ADMIN` ⊃ `SUPERVISOR` ⊃ `ANALYST`. En pantalla (prototipo de Alejandro): **Master / Soporte Técnico** ⊃ **Gerente de Seguridad (CISO)** ⊃ **Analista de Seguridad**.
 
 **¿Quién es quién? (roles del sistema)**
 
@@ -329,7 +370,7 @@ Jerarquía de roles: `ADMIN` ⊃ `SUPERVISOR` ⊃ `ANALYST`.
   "recommendation": "No abrir enlaces ni adjuntos. Mantener en cuarentena y reportar al área de seguridad.",
   "pii_masked": [],
   "ai_used": true,
-  "ai_model": "@cf/zai-org/glm-4.7-flash",
+  "ai_model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
   "human_review_required": true
 }
 ```
@@ -406,7 +447,9 @@ git add -A && git commit -m "feat(<modulo>): <qué hice>" && git push
 
 > "Lee `C&I.md` (Secciones 4, 5 y 6). Backend: (1) `hash.ts`: PBKDF2-SHA256 con WebCrypto (100 000 iteraciones, salt aleatorio) y SHA-256 para la cadena de auditoría. (2) `auth.ts`: login que verifica la contraseña y emite una cookie `HttpOnly; Secure; SameSite=Strict` con token firmado HMAC (secreto `SESSION_SECRET`, expira en 8 h); middleware `requireRole('ANALYST'|'SUPERVISOR'|'ADMIN')` con jerarquía. (3) `0002_demo_users.sql` con 3 usuarios de demo (admin, supervisor, analista) con hash precalculado; las contraseñas de demo se muestran en la pantalla de login. (4) `d1Repos.ts`: repositorios de correos y auditoría (el repositorio de auditoría calcula `hash = SHA256(prev_hash + datos del evento)`). (5) Rutas `/auth/*`, `/mailbox`, `/mailbox/deliver`, `/mailbox/:id/review`, `/dashboard` y `/audit/verify` según la Sección 5.2. Frontend con los componentes de Alejandro (`components/ui`): Login; Buzón estilo cliente de correo con pestañas Bandeja/Spam/Cuarentena, contador de cada una y detalle del correo con indicadores, fundamento legal y botones 'Confirmar amenaza' y 'Restaurar a bandeja' (solo SUPERVISOR+); Dashboard con 4 KPI, gráfico de barras de entidades más suplantadas y tabla de últimos eventos con su hash. Botón 'Simular llegada de correo' que llama a `/mailbox/deliver` con un caso de `DEMO_CASES.md`. Mínimo 6 tests."
 
-#### 📌 Alejandro — M3: UX/UI, deck, video y pitch · rama `feat/ux-ui`
+#### 📌 Alejandro — M3: UX/UI, deck, video y pitch · **sin GitHub (entrega por chat interno)**
+
+> ⚠️ **Actualizado:** Alejandro diseña y entrega por chat (entregables **D0–D5** de `PLAN_PRS.md` §2.4). El código de UI lo implementan Anthony (X1 tema, X2 componentes), Williams (X3 Analizador) y Gabriel + Anthony (X4 pulido) usando la descripción de abajo como especificación.
 
 **Archivos:** `web/src/styles/tokens.css`, `tailwind.config.ts` (solo la sección `theme`), `web/src/components/ui/*`, `web/src/components/analyzer/*`, `web/src/pages/Analyzer.tsx`, `docs/design/*`, `docs/PITCH_SCRIPT.md`, `README.md` (redacción), deck y video.
 
@@ -422,7 +465,7 @@ git add -A && git commit -m "feat(<modulo>): <qué hice>" && git push
 **Archivos:** todo lo compartido (`src/index.ts`, `domain/types.ts`, `domain/ports.ts`, `web/src/types/contracts.ts`, `web/src/services/apiClient.ts`, `package.json`, `wrangler.toml`, CI/CD, Docker), `piiSanitizer.ts`, `workersAiGateway.ts`, `ethicsGuard.ts`, `assistant.ts`, `assistantRoutes.ts`, `components/assistant/*`, `pages/Assistant.tsx`, `SPEC.md`.
 
 - **F0:** esqueleto, contratos, **rutas mock** con el JSON exacto, CI/CD, entornos QA y producción.
-- **Guardián ético:** PII → patrones de inyección → Llama Guard 3 (peticiones ofensivas) → GLM-4.7 Flash con el system prompt "C&I… defensa pura, cero invención" (idea de Williams).
+- **Guardián ético:** PII → patrones de inyección → Llama Guard 3 (peticiones ofensivas) → Llama 3.3 70B con el system prompt "C&I… defensa pura, cero invención" (idea de Williams).
 - Integración en cada checkpoint, entregas en `/remoto` y `SPEC.md`.
 
 ---
@@ -491,7 +534,7 @@ El correo corporativo es la principal puerta de entrada de los ataques contra la
 
 ## 6. Arquitectura
 
-Frontend: Vite + React + Tailwind (Static Assets). Backend: Cloudflare Workers + Hono. Datos: D1. IA: Workers AI (GLM-4.7 Flash, Llama Guard 3). Seguridad: PBKDF2, sesión HMAC, RBAC, hash SHA-256 encadenado. Servicios Cloudflare: Workers, D1, Workers AI, Static Assets.
+Frontend: Vite + React + Tailwind (Static Assets). Backend: Cloudflare Workers + Hono. Datos: D1. IA: Workers AI (Llama 3.3 70B, Llama Guard 3). Seguridad: PBKDF2, sesión HMAC, RBAC, hash SHA-256 encadenado. Servicios Cloudflare: Workers, D1, Workers AI, Static Assets.
 
 ## 7. Modelo de datos
 
@@ -502,7 +545,7 @@ Tablas `users`, `emails`, `audit_events` (ver `migrations/`).
 | Pregunta                       | Respuesta                                                                                                                                                             |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ¿Usas IA en tu solución?       | Sí                                                                                                                                                                    |
-| ¿Qué modelo y por qué?         | GLM-4.7 Flash (explicaciones y asistente) y Llama Guard 3 (detección de peticiones dañinas), en Workers AI: recomendados por el evento y sin enviar datos a terceros. |
+| ¿Qué modelo y por qué?         | Llama 3.3 70B (explicaciones y asistente) y Llama Guard 3 (detección de peticiones dañinas), en Workers AI: recomendados por el evento y sin enviar datos a terceros. |
 | ¿Qué problema resuelve?        | Clasifica tácticas de ingeniería social en español y explica las decisiones en lenguaje claro.                                                                        |
 | ¿Qué datos procesa?            | Solo texto anonimizado y sintético. Nunca datos personales reales.                                                                                                    |
 | ¿Cómo evitas sesgos?           | Las reglas verificables pesan 70 %; la IA, 30 %. Probamos con correos de distintas entidades y estilos.                                                               |
@@ -553,7 +596,7 @@ Sistema inteligente contra el phishing en el correo corporativo de la banca vene
 
 ## Arquitectura Cloudflare usada
 
-Workers (API Hono) · D1 (buzón, usuarios, bitácora) · Workers AI (GLM-4.7 Flash + Llama Guard 3) · Static Assets (React)
+Workers (API Hono) · D1 (buzón, usuarios, bitácora) · Workers AI (Llama 3.3 70B + Llama Guard 3) · Static Assets (React)
 
 ## Uso de IA
 
@@ -578,9 +621,11 @@ Anthony Leguisamo · Williams Mejía · Gabriel Flores · Alejandro Sánchez —
 | 0:30–1:45 | **Demo en vivo:** botón "Simular llegada" → el correo cae solo en **Cuarentena** con su dictamen y su fundamento legal → un correo legítimo queda en Bandeja → el supervisor de seguridad confirma → el asistente bloquea una petición para saltar el firewall | Viabilidad / MVP  |
 | 1:45–2:15 | IA responsable: reglas deciden, IA explica, PII anonimizada, revisión humana, bitácora con hash                                                                                                                                                                | Ética + uso de IA |
 | 2:15–2:40 | Arquitectura Cloudflare + SDD + tests automáticos                                                                                                                                                                                                              | Calidad técnica   |
-| 2:40–3:00 | Roadmap: conexión con Exchange/Gmail y **versión on-premise con IA local** para soberanía total de los datos bancarios                                                                                                                                         | Escalabilidad     |
+| 2:40–3:00 | **Instalable dentro del banco:** "Hoy lo ven en la nube, pero el mismo sistema ya corre en un contenedor **sin internet**. En un banco se instala en sus propios servidores, con la IA funcionando localmente: los datos nunca salen de la institución." + conexión con su servidor de correo | Escalabilidad y soberanía |
 
-Preguntas a preparar: falsos positivos · ¿por qué no solo IA? · ¿cómo se conecta a un correo real? · ¿y la soberanía de los datos? (respuesta: la versión on-premise con Ollama usa el mismo puerto de IA) · ¿qué normas aplican?
+**Demostración opcional (si preguntan por la instalación interna):** mostrar el contenedor Docker en modo `offline` funcionando sin internet (`docker compose up`).
+
+Preguntas a preparar: ¿se puede instalar dentro del banco? (sí: contenedor + IA local con Ollama, mismo código) · falsos positivos · ¿por qué no solo IA? · ¿cómo se conecta a un correo real? · ¿y la soberanía de los datos? (respuesta: la versión on-premise con Ollama usa el mismo puerto de IA) · ¿qué normas aplican?
 
 ---
 
@@ -606,7 +651,7 @@ Solo Anthony hace merge en `qa`, `development` y `main`. Reparto completo de PR 
 | **F2 Integración** | Sáb 03:00–05:00 | Anthony + quien esté despierto | Todo en `development`, primer `development → main`, **primera entrega en `/remoto`**                                                                                                                         |
 | **F3 Pulido**      | Sáb 08:00–12:30 | Todos                          | UI final, casos de demo, README, SPEC, cifras, video                                                                                                                                                         |
 
-**Orden de merge en cada checkpoint:** Alejandro (UI base) → Williams (motor) → Gabriel (buzón/roles) → Anthony (guardián). Los archivos compartidos solo los modifica Anthony.
+**Orden de merge en cada checkpoint:** UX base (X1/X2) → Williams (motor) → Gabriel (buzón/roles) → Anthony (guardián). Los archivos compartidos solo los modifica Anthony.
 
 **Turnos de descanso (protocolo `/en-vivo`):**
 
@@ -798,7 +843,7 @@ docker compose up --build --abort-on-container-exit --exit-code-from smoke
 
 | #   | Hora          | Foco                                                                                                           |
 | --- | ------------- | -------------------------------------------------------------------------------------------------------------- |
-| CP0 | **Vie 23:00** | Staging y producción responden `/health`; CI verde; los 4 pasaron `npm run check`; bocetos de Alejandro listos |
+| CP0 | **Vie 23:00** | Staging y producción responden `/health`; CI verde; los 4 pasaron `npm run check`; bocetos de Alejandro subidos a `docs/design/` listos |
 | CP1 | **Sáb 01:00** | Motor de correo y login en QA; buzón con seed                                                                  |
 | CP2 | **Sáb 03:00** | Buzón + cuarentena + revisión + guardián. **Primer `qa → development → main` y primera entrega en `/remoto`**  |
 | CP3 | **Sáb 05:00** | Regresión del turno de madrugada (lo dirige Gabriel si Anthony duerme)                                         |
@@ -810,7 +855,7 @@ docker compose up --build --abort-on-container-exit --exit-code-from smoke
 **Procedimiento de cada checkpoint:**
 
 1. Aviso 10 minutos antes: "push de lo que funcione".
-2. `gh pr list --base qa` → aprobar y hacer merge a `qa` solo de los PR con CI verde (orden: Alejandro → Williams → Gabriel → Anthony): `gh pr review <n> --approve && gh pr merge <n> --squash`.
+2. `gh pr list --base qa` → aprobar y hacer merge a `qa` solo de los PR con CI verde (orden: UX base → Williams → Gabriel → Anthony): `gh pr review <n> --approve && gh pr merge <n> --squash`.
 3. `gh run watch` → despliegue al entorno QA + smoke. Luego correr el **agente QA** ([PLAN_PRS.md](PLAN_PRS.md) §4.2); si aprueba, PR `qa → development`.
 4. `docker compose up --build --abort-on-container-exit --exit-code-from smoke`.
 5. Prueba humana en el teléfono (datos móviles): 3 casos de `DEMO_CASES.md`, login con cada rol.
@@ -1043,7 +1088,7 @@ const withTimeout = <T>(p: Promise<T>) =>
   ]);
 
 export class WorkersAiGateway implements AiGatewayPort {
-  readonly modelName = "@cf/zai-org/glm-4.7-flash";
+  readonly modelName = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
   private readonly guardModel = "@cf/meta/llama-guard-3-8b";
   constructor(private readonly ai: Ai) {}
 
