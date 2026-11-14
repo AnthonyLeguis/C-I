@@ -116,9 +116,11 @@ Seguridad: PBKDF2 (WebCrypto), sesión HMAC en cookie `HttpOnly`, RBAC en cada e
 | `POST /mailbox/:id/review` `{ "decision": "CONFIRM" \| "RESTORE" }` | SUPERVISOR |
 | `GET /dashboard` | ANALYST |
 | `POST /assistant/ask` | ANALYST |
+| `POST /domains/block` · `GET /domains/blocked` · `DELETE /domains/blocked/:domain` | SUPERVISOR |
+| `GET /audit/export.csv` | SUPERVISOR |
 | `GET /audit/verify` | ADMIN |
 
-Planificados en el contrato (§5.2 de `docs/C&I.md`): `POST /mailbox/:id/approve` · `/escalate`, bloqueo de dominios, `GET /audit/export.csv` y endpoints de soporte (`/support/*`).
+Planificados en el contrato (§5.2 de `docs/C&I.md`): `POST /mailbox/:id/approve` · `/escalate` y endpoints de soporte (`/support/*`).
 
 Errores: `400 { "error": "..." }` · `401` sin sesión · `403` rol insuficiente. Nunca se devuelve una traza interna.
 
