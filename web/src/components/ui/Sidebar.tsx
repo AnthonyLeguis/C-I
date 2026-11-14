@@ -42,10 +42,13 @@ export function Sidebar({ active, role, pendingCount = 0, open, collapsed, onTog
   return (
     <>
       <div onClick={onClose} aria-hidden className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-200 lg:hidden ${open ? "opacity-100" : "pointer-events-none opacity-0"}`} />
+      {/* El fondo del menú se estira a todo el alto de la página (nunca se ve más corto, ni en capturas de
+          página completa); el contenido interno queda fijo a la vista mientras se hace scroll. */}
       <aside
-        className={`glass fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col border-r border-line text-ink-2 transition-[transform,width] duration-[260ms] ease-[cubic-bezier(.16,1,.3,1)] max-lg:bg-[var(--glass-strong)] lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${rail ? "lg:w-[76px]" : "lg:w-[248px]"} ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`glass fixed inset-y-0 left-0 z-50 w-[264px] shrink-0 border-r border-line text-ink-2 transition-[transform,width] duration-[260ms] ease-[cubic-bezier(.16,1,.3,1)] max-lg:bg-[var(--glass-strong)] lg:relative lg:inset-auto lg:translate-x-0 lg:self-stretch ${rail ? "lg:w-[76px]" : "lg:w-[248px]"} ${open ? "translate-x-0" : "-translate-x-full"}`}
         aria-label="Navegación principal"
       >
+        <div className="flex h-full flex-col lg:sticky lg:top-0 lg:h-screen">
         {/* Encabezado con el logo */}
         <div className={`flex h-[72px] items-center border-b border-line px-4 ${rail ? "lg:justify-center lg:px-0" : ""}`}>
           <span className="hidden lg:block"><BrandLockup compact={rail} /></span>
@@ -113,6 +116,7 @@ export function Sidebar({ active, role, pendingCount = 0, open, collapsed, onTog
             <span className={rail ? "lg:hidden" : ""}>Por: C&amp;I - 2026</span>
             {rail && <span className="hidden lg:inline">C&amp;I</span>}
           </p>
+        </div>
         </div>
       </aside>
     </>
