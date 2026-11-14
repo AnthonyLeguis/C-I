@@ -1,6 +1,6 @@
 # 🛡️ C&I
 
-![C&I · Anticipamos el riesgo. Fortalecemos tu confianza.](web/public/logo-ci.jpg)
+![C&I · Anticipamos el riesgo. Fortalecemos tu confianza.](web/public/logo-ci-light.png)
 
 Sistema inteligente contra el phishing en el correo corporativo de la banca venezolana.
 Equipo **C&I – Creatividad e Innovación** · Hackathon UNETI IA 2026 · Proyecto #24 (+ #18).

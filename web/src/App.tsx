@@ -5,6 +5,7 @@ import { AlertTriangle, Info, ShieldAlert, ShieldCheck, Sparkles } from "lucide-
 import { api } from "./services/apiClient";
 import type { HealthResponse } from "./types/contracts";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
+import { Logo } from "./components/ui/Logo";
 import { UiShowcase } from "./pages/UiShowcase";
 import { AssistantPreview } from "./pages/AssistantPreview";
 
@@ -39,7 +40,7 @@ function StatusPage() {
         <ThemeToggle />
       </div>
       <section className="mx-auto mt-4 max-w-3xl rounded-card border border-line bg-surface p-6 shadow-card sm:p-8">
-        <img src="/logo-ci.jpg" alt="C&I · Anticipamos el riesgo. Fortalecemos tu confianza." className="mx-auto w-full max-w-sm rounded-card" />
+        <div className="flex justify-center"><Logo className="w-full max-w-sm" /></div>
         <div className="mt-6 text-center">
           {status.kind === "loading" && <p className="text-ink-muted">Verificando el sistema…</p>}
           {status.kind === "ok" && (
