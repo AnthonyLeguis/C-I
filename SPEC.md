@@ -139,7 +139,7 @@ Ver `migrations/0001_schema.sql`.
 | Pregunta | Respuesta |
 |---|---|
 | ¿Usas IA en tu solución? | Sí. |
-| ¿Qué modelo y por qué? | **Llama 3.3 70B Instruct (fp8-fast)** para explicaciones y asistente: buen español y respuesta rápida. **Llama 4 Scout 17B** como respaldo. **Llama Guard 3 8B** para detectar peticiones dañinas o inyección. Todos en Workers AI: recomendados por el evento y sin enviar datos a terceros. Descartamos GLM-4.7 Flash porque es un modelo de razonamiento y tardaba ~7,6 s por respuesta. |
+| ¿Qué modelo y por qué? | **Llama 3.3 70B Instruct (fp8-fast)** para explicaciones y asistente: buen español y respuesta rápida. **Llama 4 Scout 17B** como respaldo. **Llama Guard 3 8B** para detectar peticiones dañinas o inyección. Todos corren en Workers AI, la plataforma que recomienda el evento, sin enviar datos a terceros. Los modelos que sugería el manual se probaron: GLM-4.7 Flash es de razonamiento y tarda ~7,6 s, y Llama 3.1 8B fue retirado de Workers AI. Descartamos GLM-4.7 Flash porque es un modelo de razonamiento y tardaba ~7,6 s por respuesta. |
 | ¿Qué problema resuelve? | Capta matices de ingeniería social en español y explica cada decisión en lenguaje claro para el analista. |
 | ¿Qué datos procesa? | Solo texto **sintético y anonimizado**. La PII se reemplaza por marcadores (`[CEDULA_PROTEGIDA]`, etc.) antes de llegar al modelo. Nunca datos personales reales. |
 | ¿Cómo evitas sesgos? | Las reglas verificables pesan 70 % y la IA 30 %: la IA sola no puede mandar un correo legítimo a cuarentena ni sacar uno peligroso. Probamos con correos de distintas entidades, estilos y niveles de riesgo. |
