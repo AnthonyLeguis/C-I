@@ -24,11 +24,9 @@ describe("contratos de la API (mocks del F0)", () => {
     expect(r.status).toBe(400);
   });
 
-  it("GET /dashboard trae los bloques de PLAN_UX §4", async () => {
-    const body = (await (await app.request("/api/v1/dashboard", {}, env)).json()) as Record<string, unknown>;
-    for (const k of ["kpis", "by_risk_level", "by_folder", "by_indicator_category", "top_impersonated", "timeline", "review_queue", "recent_events", "chain_ok", "ai_status"]) {
-      expect(body).toHaveProperty(k);
-    }
+  it("GET /dashboard sin sesión → 401 (G4 exige login)", async () => {
+    const r = await app.request("/api/v1/dashboard", {}, env);
+    expect(r.status).toBe(401);
   });
 
   it("ruta inexistente → 404 en JSON", async () => {
