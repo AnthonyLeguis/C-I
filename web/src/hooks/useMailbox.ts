@@ -3,11 +3,24 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../services/apiClient";
 import type { DemoScenarioDto, MailboxResponse, MailboxView } from "../types/contracts";
 
+const FOCUS_KEY = "ci-open-email";
+const FOCUS_EVENT = "ci-open-email";
+
+/** Pide al Buzón abrir un caso (lo usa la campana de notificaciones). */
+export function requestMailboxFocus(emailId: string): void {
+  try { sessionStorage.setItem(FOCUS_KEY, emailId); } catch { /* sin almacenamiento */ }
+  window.dispatchEvent(new CustomEvent(FOCUS_EVENT, { detail: emailId }));
+}
+function takeFocusEmail(): string | null {
+  try { const id = sessionStorage.getItem(FOCUS_KEY); sessionStorage.removeItem(FOCUS_KEY); return id; } catch { return null; }
+}
+
 export function useMailbox() {
-  const [view, setView] = useState<MailboxView>("ALL");
+  const [focus] = useState(takeFocusEmail); // caso abierto desde la campana de notificaciones
+  const [view, setView] = useState<MailboxView>(focus ? "PENDING" : "ALL");
   const [data, setData] = useState<MailboxResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(focus);
   const [freshId, setFreshId] = useState<string | null>(null);
   const [scenarios, setScenarios] = useState<DemoScenarioDto[]>([]);
   const [busy, setBusy] = useState(false);
@@ -21,6 +34,12 @@ export function useMailbox() {
   }, [view]);
 
   useEffect(() => { void load(view); }, [view, load]);
+  // Si el Buzón ya está abierto y se elige otro caso en la campana
+  useEffect(() => {
+    const on = (e: Event) => { const id = (e as CustomEvent<string>).detail; takeFocusEmail(); if (id) { setView("PENDING"); setSelectedId(id); } };
+    window.addEventListener(FOCUS_EVENT, on);
+    return () => window.removeEventListener(FOCUS_EVENT, on);
+  }, []);
   useEffect(() => { api.scenarios().then((r) => setScenarios(r.scenarios)).catch(() => setScenarios([])); }, []);
 
   const simulate = useCallback(async (caseId: string) => {

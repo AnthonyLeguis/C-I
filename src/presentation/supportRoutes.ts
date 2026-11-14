@@ -1,4 +1,4 @@
-// Dueño: Anthony (PR A6). Consola de Soporte — solo Master (ADMIN).
+// Dueño: Anthony (PR A6). Consola de Soporte — la ven todos los perfiles; solo el Master (ADMIN) actúa.
 // Estado del sistema, modo del motor de IA (en línea / solo reglas) y restablecimiento de la demo.
 import { Hono } from "hono";
 import { z } from "zod";
@@ -17,7 +17,9 @@ const ModeRequest = z.object({ mode: z.enum(["ONLINE", "RULES"]) });
 const ResetRequest = z.object({ with_samples: z.boolean().default(true) });
 
 export const supportRoutes = new Hono<AppEnv>();
-supportRoutes.use("*", requireRole("ADMIN") as never);
+supportRoutes.use("*", requireRole("ANALYST") as never); // lectura del estado: todos los perfiles
+supportRoutes.use("/mode", requireRole("ADMIN") as never); // acciones: solo Master
+supportRoutes.use("/reset-demo", requireRole("ADMIN") as never);
 
 supportRoutes.get("/status", async (c) => {
   const db = c.env.DB;
