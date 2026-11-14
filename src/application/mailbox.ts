@@ -30,11 +30,22 @@ export async function listMailbox(view: MailboxView, store: MailboxStorePort) {
   return { folder: view, counts, total: all.length, pending: pending.length, emails };
 }
 
-export interface DeliverDeps { store: MailboxStorePort; audit: AuditRepositoryPort; analyze: MailAnalyzer; sanitize: (t: string) => string; newId: () => string; now: () => Date }
+export interface DeliverDeps {
+  store: MailboxStorePort; audit: AuditRepositoryPort; analyze: MailAnalyzer; sanitize: (t: string) => string; newId: () => string; now: () => Date;
+  /** G7: si el dominio del remitente está en la lista corporativa de bloqueo, el correo va directo a cuarentena. */
+  isBlocked?: (domain: string) => Promise<boolean>;
+}
 
 /** Simula la llegada de un correo: lo analiza, lo guarda en su carpeta y lo registra en la bitácora. */
 export async function deliverEmail(email: EmailInput, deps: DeliverDeps) {
-  const verdict = await deps.analyze(email);
+  let verdict = await deps.analyze(email);
+  const senderDomain = email.fromAddress.split("@")[1]?.toLowerCase() ?? "";
+  if (deps.isBlocked && senderDomain && (await deps.isBlocked(senderDomain))) {
+    verdict = {
+      ...verdict, riskLevel: "CRITICAL", riskScore: Math.max(verdict.riskScore, 95), folder: "QUARANTINE", humanReviewRequired: true,
+      indicators: [{ category: "REMITENTE", text: `El dominio ${senderDomain} está en la lista corporativa de bloqueo`, weight: 50 }, ...verdict.indicators],
+    };
+  }
   const id = deps.newId();
   const record: MailboxEmail = {
     id, recipient: DEMO_RECIPIENT, fromAddress: email.fromAddress, fromName: email.fromName ?? null, replyTo: email.replyTo ?? null,

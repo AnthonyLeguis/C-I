@@ -1,7 +1,7 @@
 // ÚNICO archivo del frontend donde se permite fetch(). Archivo compartido: solo lo modifica Anthony.
 import type {
   AnalyzeRequest, AnalyzeResponse, AskResponse, DashboardResponse, DeliverResponse, DemoScenarioDto, DemoUser, HealthResponse, MailboxResponse,
-  MailboxView, ReviewResponse, TimelineQaResponse, User,
+  BlockedDomainDto, MailboxView, ReviewResponse, TimelineQaResponse, User,
 } from "../types/contracts";
 
 export class ApiClientError extends Error {
@@ -38,6 +38,13 @@ export const api = {
   scenarios: () => request<{ scenarios: DemoScenarioDto[] }>("/mailbox/scenarios"),
   deliver: (caseId: string) => post<DeliverResponse>("/mailbox/deliver", { case_id: caseId }),
   review: (emailId: string, decision: "CONFIRM" | "RESTORE") => post<ReviewResponse>(`/mailbox/${emailId}/review`, { decision }),
+  approve: (emailId: string) => post<ReviewResponse>(`/mailbox/${emailId}/approve`, {}),
+  escalate: (emailId: string) => post<ReviewResponse>(`/mailbox/${emailId}/escalate`, {}),
+  blockDomain: (domain: string, emailId: string | null = null) => post<{ domain: string; audit_hash: string }>("/domains/block", { domain, email_id: emailId ?? undefined }),
+  blockedDomains: () => request<{ domains: BlockedDomainDto[] }>("/domains/blocked"),
+  unblockDomain: (domain: string) => request<{ domain: string; audit_hash: string }>(`/domains/blocked/${encodeURIComponent(domain)}`, { method: "DELETE" }),
+  /** URL directa de descarga (el navegador envía la cookie de sesión). */
+  auditCsvUrl: "/api/v1/audit/export.csv",
   dashboard: () => request<DashboardResponse>("/dashboard"),
   ask: (question: string, emailId: string | null = null) => post<AskResponse>("/assistant/ask", { question, email_id: emailId }),
   timelineQa: () => request<TimelineQaResponse>("/timeline-qa"), // MÓDULO ELIMINABLE

@@ -2,7 +2,7 @@
 
 export type RiskLevel = "SAFE" | "LOW" | "HIGH" | "CRITICAL";
 export type Folder = "INBOX" | "SPAM" | "QUARANTINE";
-export type ReviewStatus = "N/A" | "PENDING" | "CONFIRMED" | "RESTORED";
+export type ReviewStatus = "N/A" | "PENDING" | "CONFIRMED" | "RESTORED" | "ESCALATED";
 export type Role = "ANALYST" | "SUPERVISOR" | "ADMIN";
 export type IndicatorCategory = "REMITENTE" | "AUTENTICACION" | "ENLACES" | "ADJUNTOS" | "INGENIERIA_SOCIAL" | "DATOS_PERSONALES" | "OTROS";
 export type AiStatus = "ONLINE" | "FALLBACK" | "UNKNOWN";
@@ -63,6 +63,7 @@ export type MailboxView = Folder | "ALL" | "PENDING";
 export interface MailboxResponse { folder: MailboxView; counts: Record<Folder, number>; total: number; pending: number; emails: EmailDto[] }
 export interface DemoScenarioDto { id: string; label: string }
 export interface DeliverResponse { email_id: string; audit_hash: string }
+export interface BlockedDomainDto { domain: string; reason: string; blocked_by: string; email_id: string | null; created_at: string }
 export interface DemoUser { username: string; display_name: string; role: Role }
 export interface ReviewResponse { email_id: string; review_status: ReviewStatus; folder: Folder; audit_hash: string }
 

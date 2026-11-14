@@ -24,13 +24,15 @@ export const FOLDER: Record<Folder, VisualSpec> = {
   QUARANTINE: { label: "Cuarentena", icon: Lock, tone: "text-critical bg-critical-soft border-critical/40", color: "var(--critical)" },
 };
 
+export const ESCALATED: VisualSpec = { label: "ESCALADO A CISO", icon: ArrowUpRight, tone: "text-escalated bg-escalated-soft border-escalated/40", color: "var(--escalated)" };
+
 export const REVIEW: Record<Exclude<ReviewStatus, "N/A">, VisualSpec> = {
   PENDING: { label: "PENDIENTE DE REVISIÓN", icon: Clock, tone: "text-high bg-high-soft border-high/40", color: "var(--high)" },
   CONFIRMED: { label: "AMENAZA CONFIRMADA", icon: CheckCircle2, tone: "text-critical bg-critical-soft border-critical/40", color: "var(--critical)" },
   RESTORED: { label: "RESTAURADO", icon: Undo2, tone: "text-safe bg-safe-soft border-safe/40", color: "var(--safe)" },
+  ESCALATED,
 };
 
-export const ESCALATED: VisualSpec = { label: "ESCALADO A CISO", icon: ArrowUpRight, tone: "text-escalated bg-escalated-soft border-escalated/40", color: "var(--escalated)" };
 
 export const ROLE_LABEL = { ANALYST: "Analista de Seguridad", SUPERVISOR: "Gerente de Seguridad (CISO)", ADMIN: "Master / Soporte Técnico" } as const;
 
