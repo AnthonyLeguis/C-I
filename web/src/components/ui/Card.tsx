@@ -6,7 +6,7 @@ export function Card({ interactive = false, accent, className = "", children, ..
     <div
       {...rest}
       style={accent ? { borderTopColor: accent, borderTopWidth: 3, ...rest.style } : rest.style}
-      className={`rounded-card border border-line bg-surface p-5 shadow-card sm:p-6 ${interactive ? "lift cursor-pointer" : ""} ${className}`}
+      className={`rounded-card border border-line bg-surface/90 p-5 shadow-card sm:p-6 ${interactive ? "lift cursor-pointer" : ""} ${className}`}
     >
       {children}
     </div>
