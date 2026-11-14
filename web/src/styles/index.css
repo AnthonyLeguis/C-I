@@ -297,3 +297,21 @@ body {
 .press:active:not(:disabled) {
   transform: scale(0.98);
 }
+
+/* Correo recién llegado: entra deslizándose y destella con el color de su nivel. */
+.animate-arrive {
+  animation: ci-slide-in 400ms var(--ease-out-expo) both, ci-flash 900ms ease-out 1;
+}
+
+/* X4 · Fluidez: en rejillas y filas flexibles, los hijos pueden encogerse para que `truncate` funcione
+   y nada desborde en pantallas pequeñas (390 px) ni en el proyector (1920 px). */
+.grid > *,
+.flex-1 {
+  min-width: 0;
+}
+
+/* X4 · Foco visible y consistente en todo control interactivo (accesibilidad con teclado). */
+:where(a, button, input, select, textarea, [role="tab"]):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}

@@ -2,7 +2,7 @@
 
 export type RiskLevel = "SAFE" | "LOW" | "HIGH" | "CRITICAL";
 export type Folder = "INBOX" | "SPAM" | "QUARANTINE";
-export type ReviewStatus = "N/A" | "PENDING" | "CONFIRMED" | "RESTORED";
+export type ReviewStatus = "N/A" | "PENDING" | "CONFIRMED" | "RESTORED" | "ESCALATED";
 export type Role = "ANALYST" | "SUPERVISOR" | "ADMIN";
 export type IndicatorCategory = "REMITENTE" | "AUTENTICACION" | "ENLACES" | "ADJUNTOS" | "INGENIERIA_SOCIAL" | "DATOS_PERSONALES" | "OTROS";
 export type AiStatus = "ONLINE" | "FALLBACK" | "UNKNOWN";
@@ -39,6 +39,8 @@ export interface AnalyzeResponse {
   human_review_required: boolean;
 }
 
+export interface EmailIndicatorDto { category: IndicatorCategory; text: string; weight?: number }
+
 export interface EmailDto {
   id: string;
   recipient: string;
@@ -51,10 +53,30 @@ export interface EmailDto {
   folder: Folder;
   risk_level: RiskLevel | null;
   risk_score: number | null;
+  indicators: EmailIndicatorDto[];
+  legal_basis: LegalBasis[];
+  xai_explanation: string | null;
   review_status: ReviewStatus;
 }
 
-export interface MailboxResponse { folder: Folder; counts: Record<Folder, number>; emails: EmailDto[] }
+export type MailboxView = Folder | "ALL" | "PENDING";
+export interface MailboxResponse { folder: MailboxView; counts: Record<Folder, number>; total: number; pending: number; emails: EmailDto[] }
+export interface DemoScenarioDto { id: string; label: string }
+export interface DeliverResponse { email_id: string; audit_hash: string }
+export interface BlockedDomainDto { domain: string; reason: string; blocked_by: string; email_id: string | null; created_at: string }
+export interface AuditEventDto {
+  id: string; created_at: string; module: string; actor: string; risk_level: RiskLevel | null; risk_score: number | null;
+  action_taken: string; email_id: string | null; xai_explanation: string | null; ai_used: boolean; ai_model: string | null; prev_hash: string | null; hash: string;
+}
+export interface AuditEventsResponse { total: number; events: AuditEventDto[] }
+export type AiMode = "ONLINE" | "RULES";
+export interface SupportStatus {
+  ai: { mode: AiMode; binding: boolean; model: string; fallback_model: string; guard_model: string };
+  database: { ok: boolean; latency_ms: number; emails: number; events: number; blocked: number };
+  mail_ingestion: { source: string; ok: boolean };
+  checked_at: string;
+}
+export interface DemoUser { username: string; display_name: string; role: Role }
 export interface ReviewResponse { email_id: string; review_status: ReviewStatus; folder: Folder; audit_hash: string }
 
 export interface AskResponse {

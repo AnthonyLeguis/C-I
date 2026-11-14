@@ -1,6 +1,6 @@
 // Portada temporal del entorno QA: mapa de pantallas construidas y pendientes (para revisión de Alejandro).
 // Se reemplaza por el Login real cuando entre G5 (Gabriel).
-import { ArrowRight, Clock, ImageIcon, LayoutDashboard, Lock, Mail, MessageSquareText, Palette, ScanSearch, ScrollText, ShieldAlert, TrendingUp, Wrench, type LucideIcon } from "lucide-react";
+import { ArrowRight, Clock, ImageIcon, LayoutDashboard, Lock, Mail, MessageSquareText, Palette, ScanSearch, ScrollText, ShieldAlert, Wrench, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Card, Eyebrow, Logo, PageTransition, Stagger, ThemeToggle } from "../components/ui";
 import { api } from "../services/apiClient";
@@ -9,17 +9,16 @@ interface Screen { name: string; desc: string; icon: LucideIcon; href?: string; 
 
 const PROTO = "https://github.com/AnthonyLeguis/C-I/blob/qa/docs/design/prototipo/";
 const READY: Screen[] = [
-  { name: "Asistente IA", desc: "Preguntas con datos tapados y guardián ético (IA real).", icon: MessageSquareText, href: "/asistente", owner: "Anthony", point: "A4" },
-  { name: "Kit de componentes", desc: "Colores, niveles de alerta, medidor, KPI, botones y animaciones.", icon: Palette, href: "/ui", owner: "Anthony", point: "X2" },
-  { name: "Avance del equipo", desc: "Porcentaje por desarrollador y PR pendientes.", icon: TrendingUp, href: "/timeline-qa", owner: "Anthony", point: "—" },
+  { name: "Login con perfiles", desc: "Entrada en 1 clic por rol y formulario.", icon: Lock, href: "/login", owner: "Gabriel", point: "G1 + G5" },
+  { name: "Panel Principal", desc: "KPI, gráficas, triaje y eventos con sello de cadena.", icon: LayoutDashboard, href: "/panel", owner: "Gabriel", point: "G4 + G6" },
+  { name: "Buzón de Alertas", desc: "Simular llegada, cuarentena, decisiones y bloqueo.", icon: Mail, href: "/buzon", owner: "Gabriel + Williams", point: "G3 + G5 + G7 + W4" },
+  { name: "Bitácora de Eventos", desc: "Filtros, verificación de integridad y CSV.", icon: ScrollText, href: "/bitacora", owner: "Gabriel", point: "G2 + G6" },
+  { name: "Analizador de Casos", desc: "Analiza cualquier correo con reglas, IA y fundamento legal.", icon: ScanSearch, href: "/analizar", owner: "Williams", point: "W4 + X3" },
+  { name: "Asistente IA", desc: "Preguntas con datos tapados y guardián ético (IA real).", icon: MessageSquareText, href: "/asistente", owner: "Anthony", point: "A3 + A4" },
+  { name: "Consola de Soporte", desc: "Estado del sistema, modo reglas y restablecer demo (Master).", icon: Wrench, href: "/soporte", owner: "Anthony", point: "A6" },
+  { name: "Kit de componentes", desc: "Colores, niveles de alerta, medidor, KPI y animaciones.", icon: Palette, href: "/ui", owner: "Anthony", point: "X1 + X2" },
 ];
 const PENDING: Screen[] = [
-  { name: "Login con perfiles", desc: "Entrada en 1 clic y formulario.", icon: Lock, owner: "Gabriel", point: "G1 + G5", mock: "01-login-perfiles.jpg" },
-  { name: "Panel Principal", desc: "KPI, triaje y entidades suplantadas.", icon: LayoutDashboard, owner: "Gabriel", point: "G4 + G6", mock: "03-panel-kpi.jpg" },
-  { name: "Buzón de Alertas", desc: "Bandeja, Spam, Cuarentena y simulador.", icon: Mail, owner: "Gabriel", point: "G3 + G5", mock: "07-buzon-lista.jpg" },
-  { name: "Analizador de Casos", desc: "Expediente y acciones en 1 clic.", icon: ScanSearch, owner: "Williams", point: "W4 + X3", mock: "10-analizador-expediente.jpg" },
-  { name: "Bitácora de Eventos", desc: "Cadena de hash y exportar CSV.", icon: ScrollText, owner: "Gabriel", point: "G2 + G7", mock: "12-bitacora.jpg" },
-  { name: "Consola de Soporte", desc: "Estado del sistema y modo reglas.", icon: Wrench, owner: "Anthony", point: "A6", mock: "14-consola-soporte.jpg" },
 ];
 
 export function Home() {
@@ -37,7 +36,7 @@ export function Home() {
             {online === false ? "API NO DISPONIBLE" : "ENTORNO QA · SISTEMA EN LÍNEA"}
           </p>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-ink-muted">
-            Esta es la versión en construcción. Las pantallas aparecen aquí a medida que cada desarrollador pasa su PR por QA.
+            Mapa de pantallas del entorno QA: entra con un perfil de demostración desde el Login. Las pantallas pendientes muestran su diseño del prototipo.
           </p>
         </Card>
 
@@ -48,12 +47,14 @@ export function Home() {
           </Stagger>
         </section>
 
+        {PENDING.length > 0 && (
         <section>
           <Eyebrow className="mb-3">En construcción (diseño de Alejandro)</Eyebrow>
           <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {PENDING.map((s) => <ScreenCard key={s.name} s={s} ready={false} />)}
           </Stagger>
         </section>
+        )}
       </PageTransition>
     </main>
   );

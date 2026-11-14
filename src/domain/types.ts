@@ -2,7 +2,7 @@
 
 export type RiskLevel = "SAFE" | "LOW" | "HIGH" | "CRITICAL";
 export type Folder = "INBOX" | "SPAM" | "QUARANTINE";
-export type ReviewStatus = "N/A" | "PENDING" | "CONFIRMED" | "RESTORED";
+export type ReviewStatus = "N/A" | "PENDING" | "CONFIRMED" | "RESTORED" | "ESCALATED";
 export type Role = "ANALYST" | "SUPERVISOR" | "ADMIN";
 export type PiiType = "CEDULA" | "TELEFONO" | "CUENTA_BANCARIA" | "CORREO_PERSONAL";
 export type AuditModule = "MAIL_ANALYZER" | "ASSISTANT_GUARD" | "REVIEW" | "AUTH";
