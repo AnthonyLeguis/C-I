@@ -5,6 +5,7 @@ import { ChevronLeft, LayoutDashboard, Mail, MessageSquareText, ScanSearch, Scro
 import type { Role } from "../../types/contracts";
 import { BrandLockup } from "./Logo";
 import { ThemeSwitch } from "./ThemeToggle";
+import { Tooltip } from "./Tooltip";
 
 export type NavKey = "panel" | "buzon" | "analizar" | "asistente" | "bitacora" | "soporte";
 interface NavItem { key: NavKey; label: string; icon: LucideIcon; minRole: Role; group: "main" | "control" }
@@ -59,15 +60,16 @@ export function Sidebar({ active, role, pendingCount = 0, open, collapsed, onTog
         </div>
 
         {/* Flecha para contraer / expandir (solo escritorio) */}
-        <button
-          type="button"
-          onClick={onToggleCollapsed}
-          aria-label={rail ? "Expandir menú" : "Contraer menú"}
-          title={rail ? "Expandir menú" : "Contraer menú"}
-          className="press absolute -right-3.5 top-[58px] z-10 hidden h-7 w-7 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-2 shadow-card transition-colors hover:border-brand hover:text-brand lg:flex"
-        >
-          <ChevronLeft size={16} aria-hidden className={`transition-transform duration-300 ease-[cubic-bezier(.16,1,.3,1)] ${rail ? "rotate-180" : ""}`} />
-        </button>
+        <Tooltip content={rail ? "Expandir menú" : "Contraer menú"} side="right" className="absolute -right-3.5 top-[58px] z-10 hidden lg:flex">
+          <button
+            type="button"
+            onClick={onToggleCollapsed}
+            aria-label={rail ? "Expandir menú" : "Contraer menú"}
+            className="press flex h-7 w-7 items-center justify-center rounded-full border border-line-strong bg-surface text-ink-2 shadow-card transition-colors hover:border-brand hover:text-brand"
+          >
+            <ChevronLeft size={16} aria-hidden className={`transition-transform duration-300 ease-[cubic-bezier(.16,1,.3,1)] ${rail ? "rotate-180" : ""}`} />
+          </button>
+        </Tooltip>
 
         <nav className="flex-1 space-y-5 px-3 py-5">
           {groups.map((g) => (
@@ -81,7 +83,8 @@ export function Sidebar({ active, role, pendingCount = 0, open, collapsed, onTog
                   const isActive = key === active;
                   const badge = key === "buzon" && pendingCount > 0;
                   return (
-                    <li key={key} className="group relative">
+                    <li key={key}>
+                      <Tooltip content={`${label}${badge ? ` · ${pendingCount} pendientes` : ""}`} side="right" disabled={!rail} className="flex w-full">
                       <button
                         type="button"
                         onClick={() => { onNavigate(key); onClose(); }}
@@ -97,7 +100,7 @@ export function Sidebar({ active, role, pendingCount = 0, open, collapsed, onTog
                         <span className={`flex-1 truncate text-left ${rail ? "lg:hidden" : ""}`}>{label}</span>
                         {badge && <span className={`rounded-full bg-critical px-1.5 text-[11px] font-bold leading-5 text-white ${rail ? "lg:hidden" : ""}`}>{pendingCount}</span>}
                       </button>
-                      {rail && <span role="tooltip" className="nav-tip z-50 hidden rounded-control bg-console px-2.5 py-1.5 text-xs font-medium text-white shadow-card lg:block">{label}{badge ? ` · ${pendingCount}` : ""}</span>}
+                      </Tooltip>
                     </li>
                   );
                 })}

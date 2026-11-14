@@ -419,19 +419,4 @@ body {
 }
 @media (prefers-reduced-motion: reduce) { .animate-\[ci-ring_2\.4s_ease-in-out_infinite\] { animation: none !important; } }
 
-/* Tooltip del menú lateral contraído. */
-.nav-tip {
-  position: absolute;
-  left: calc(100% + 12px);
-  top: 50%;
-  transform: translate3d(-4px, -50%, 0);
-  opacity: 0;
-  pointer-events: none;
-  white-space: nowrap;
-  transition: opacity 150ms ease, transform 150ms var(--ease-out-expo);
-}
-.group:hover > .nav-tip,
-.group:focus-visible > .nav-tip {
-  opacity: 1;
-  transform: translate3d(0, -50%, 0);
-}
+

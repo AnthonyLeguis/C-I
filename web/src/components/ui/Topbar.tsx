@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type ReactNode, type RefObject } from "rea
 import type { DashboardResponse, Role } from "../../types/contracts";
 import { AlertBadge } from "./Badges";
 import { ROLE_LABEL } from "./levels";
+import { Tooltip } from "./Tooltip";
 
 export type PendingCase = DashboardResponse["review_queue"][number];
 
@@ -67,13 +68,15 @@ function Notifications({ count, items, onOpenCase }: { count: number; items: Pen
 
   return (
     <div className="relative" ref={ref}>
-      <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open} aria-label={label} title={label}
+      <Tooltip content={label} side="bottom" disabled={open}>
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open} aria-label={label}
         className={`press relative inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${open ? "border-line-strong bg-surface-2 text-ink" : "border-transparent text-ink-2 hover:border-line hover:bg-surface-2 hover:text-ink"}`}>
         <Bell size={18} aria-hidden className={count > 0 ? "origin-top animate-[ci-ring_2.4s_ease-in-out_infinite]" : ""} />
         {count > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-critical px-1 text-[10px] font-bold text-white ring-2 ring-surface">{count > 9 ? "9+" : count}</span>
         )}
       </button>
+      </Tooltip>
 
       <div role="menu" aria-hidden={!open} className={`${panelCls(open)} w-[min(22rem,calc(100vw-2rem))]`}>
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
