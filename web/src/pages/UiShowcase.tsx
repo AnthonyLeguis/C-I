@@ -16,7 +16,6 @@ export function UiShowcase() {
           <Topbar
             title="Kit de componentes C&I"
             subtitle="X2 · tokens, badges, medidor, KPI, estados, avisos y movimiento"
-            aiStatus="ONLINE"
             user={{ display_name: "Carlos Mendoza", role: "ADMIN" }}
             onMenu={() => setOpen(true)}
           />
