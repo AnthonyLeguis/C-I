@@ -320,10 +320,23 @@ body {
   min-width: 0;
 }
 
-/* X4 · Foco visible y consistente en todo control interactivo (accesibilidad con teclado). */
-:where(a, button, input, select, textarea, [role="tab"]):focus-visible {
+/* X4 · Foco visible en controles de acción (accesibilidad con teclado). */
+:where(a, button, [role="tab"], [role="switch"]):focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
+}
+
+/* Campos de texto y listas: sin contorno exterior al hacer clic; el foco se indica solo con el color del borde.
+   Si el campo ya define su propio color de foco (clase focus:border-…), se respeta. */
+:where(input, select, textarea):focus,
+:where(input, select, textarea):focus-visible {
+  outline: none;
+}
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):not([class*="focus:border"]):focus {
+  border-color: var(--brand);
+}
+:where(input, select, textarea) {
+  transition: border-color 150ms ease, background-color 150ms ease;
 }
 
 /* ───────────── Fondo vivo de ciberseguridad (CyberBackground) y vidrio ─────────────
