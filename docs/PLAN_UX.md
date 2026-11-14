@@ -19,19 +19,30 @@
 
 ## 2. Sistema de diseño
 
-### 2.1 Colores (tokens)
+### 2.1 Colores (tokens) — paleta oficial basada en `Dashboard_RC` (actualizada 13/11)
 
-| Token | Hex | Uso |
-|---|---|---|
-| `--primary` | `#0B2545` | Sidebar, encabezados, botón primario |
-| `--primary-accent` | `#134074` | Hover, elemento activo |
-| `--secondary` | `#00A8E8` | Análisis en curso, enlaces, gráficos |
-| `--bg` | `#F4F6F9` | Fondo |
-| `--surface` | `#FFFFFF` | Tarjetas, tablas |
-| `--console` | `#0D1B2A` | Bitácora / hashes |
-| `--text` | `#1B263B` | Texto principal |
-| `--text-muted` | `#5C6B73` | Metadatos y fechas |
-| `--border` | `#DDE3EA` | Bordes de tarjetas |
+> **Decisión:** se adopta la escala de colores de `Dashboard_RC` (verde de marca, fondos salvia, tinta pizarra, contrastes validados) en **modo claro y oscuro**. El **azul marino del logo** (`#0B2545`) se conserva en el menú lateral y el **cian del logo** (`#00A8E8`) en los indicadores de IA, para que app y logo combinen.
+> Cada token apunta a una variable que se redefine por tema: los componentes usan `bg-surface`, `text-ink`, etc., y el tema cambia sin tocar el marcado.
+
+| Token | Claro | Oscuro | Uso |
+|---|---|---|---|
+| `--page` | `#e7f0ea` | `#020617` | Fondo general |
+| `--surface` | `#f4faf6` | `#0f172a` | Tarjetas, tablas, paneles |
+| `--surface-2` | `#eaf3ed` | `#16203a` | Inputs, superficies secundarias |
+| `--line` / `--line-strong` | `#d6e6db` / `#c0d5c7` | `#1e293b` / `#334155` | Bordes |
+| `--ink` | `#0f172a` | `#f1f5f9` | Texto principal |
+| `--ink-2` | `#334155` | `#cbd5e1` | Texto secundario |
+| `--ink-muted` | `#64748b` | `#94a3b8` | Metadatos y fechas |
+| `--brand` | `#008542` | `#00b050` | Botón primario, foco, elemento activo |
+| `--on-brand` | `#ffffff` | `#04140a` | Texto sobre `--brand` |
+| `--brand-soft` | `#e6f7ee` | `rgba(0,176,80,.16)` | Fondos suaves de marca |
+| `--sidebar` (logo) | `#0B2545` | `#0B2545` | Menú lateral (texto blanco) |
+| `--ai` (logo) | `#00A8E8` | `#00A8E8` | Badge "Generado por IA", análisis en curso |
+| `--console` | `#0f172a` | `#020617` | Bitácora / hashes |
+
+Gráficos (series categóricas): `#2a78d6 · #1baf7a · #eda100 · #008300 · #4a3aa7 · #e34948 · #e87ba4 · #eb6834` (claro) y `#3987e5 · #199e70 · #c98500 · #008300 · #9085e9 · #e66767 · #d55181 · #d95926` (oscuro).
+
+Botón de tema (sol/luna) en el Topbar; al cambiar, transición suave de 0,4 s (respetar `prefers-reduced-motion`). Tema por defecto: **claro**; recordar la elección en `localStorage`.
 
 ### 2.2 Tipografía y espaciado
 
@@ -53,14 +64,16 @@ Espaciado en múltiplos de 8 px · padding de tarjeta 24 px · separación 16 px
 
 ### 3.1 Nivel de riesgo del correo
 
-| Nivel (API) | Etiqueta | Score | Color texto / fondo / borde | Icono Lucide | Acción automática | Mensaje corto |
-|---|---|---|---|---|---|---|
-| `SAFE` | **SEGURO** | 0–19 | `#1E8449` / `#EAFAF1` / `#27AE60` | `ShieldCheck` | Queda en **Bandeja** | "Sin señales de amenaza" |
-| `LOW` | **BAJO** | 20–49 | `#1F618D` / `#EBF5FB` / `#5DADE2` | `Info` | Queda en **Bandeja** con aviso | "Revise con atención antes de responder" |
-| `HIGH` | **ALTO** | 50–79 | `#B7950B` / `#FEF9E7` / `#F1C40F` | `AlertTriangle` | Va a **Spam** | "Posible phishing: no abra enlaces ni adjuntos" |
-| `CRITICAL` | **CRÍTICO** | 80–100 | `#922B21` / `#FDEDEC` / `#E74C3C` | `ShieldAlert` | Va a **Cuarentena** + revisión humana | "Amenaza confirmada por reglas: aislado" |
+| Nivel (API) | Etiqueta | Score | Color claro (texto / fondo) | Color oscuro (texto) | Icono Lucide | Acción automática | Mensaje corto |
+|---|---|---|---|---|---|---|---|
+| `SAFE` | **SEGURO** | 0–19 | `#0a8f34` / `#e6f7ee` | `#0ca30c` | `ShieldCheck` | Queda en **Bandeja** | "Sin señales de amenaza" |
+| `LOW` | **BAJO** | 20–49 | `#2a78d6` / `#ebf3fd` | `#3987e5` | `Info` | Queda en **Bandeja** con aviso | "Revise con atención antes de responder" |
+| `HIGH` | **ALTO** | 50–79 | `#b7791f` / `#fdf3e1` | `#fab219` | `AlertTriangle` | Va a **Spam** | "Posible phishing: no abra enlaces ni adjuntos" |
+| `CRITICAL` | **CRÍTICO** | 80–100 | `#dc2626` / `#fdecec` | `#d03b3b` | `ShieldAlert` | Va a **Cuarentena** + revisión humana | "Amenaza detectada por reglas: aislado" |
 
-> Componente `AlertBadge level="CRITICAL"` → icono + "CRÍTICO" + color. `RiskMeter score={97}` → barra 0–100 con las 4 zonas de color y el número grande.
+Estado extra **ESCALADO A CISO**: color `--serious` (`#c2410c` claro / `#ec835a` oscuro), icono `ArrowUpRight`.
+
+> Componente `AlertBadge level="CRITICAL"` → icono + "CRÍTICO" + color. `RiskMeter score={97}` → barra 0–100 con las 4 zonas (verde, azul, ámbar, rojo) y un marcador ▲ en la posición del puntaje (como en el prototipo).
 
 ### 3.2 Carpeta del correo
 
@@ -166,11 +179,31 @@ Gabriel implementa **todos** estos campos (PR G4) y los dibuja (PR G6).
 
 ---
 
+## 4.2 Prototipo de Alejandro (fuente visual oficial)
+
+Prototipo interactivo en NotebookLM ("Especificación Visual del Sistema C&I"). Capturas en [`docs/design/prototipo/`](design/prototipo/). **Se construye siguiendo esas capturas**, con la paleta de §2.1.
+
+**Decisiones sobre lo que trae el prototipo:**
+
+| Elemento del prototipo | Decisión | Responsable |
+|---|---|---|
+| Login con **selección rápida de perfil (1 clic)** + formulario + credenciales de demostración visibles | ✅ Adoptado | Gabriel (G1, G5) |
+| Nombres de rol en pantalla: **Analista de Seguridad · Gerente de Seguridad (CISO) · Master / Soporte Técnico** | ✅ Adoptado (en el código siguen `ANALYST · SUPERVISOR · ADMIN`) | Todos |
+| Usuarios demo: `jrios` (Analista) · `svalenzuela` (CISO) · `cmendoza` (Master) | ✅ Adoptado (sintéticos) | Gabriel (G1) |
+| Panel: 4 KPI, casos prioritarios para triaje, conteo por nivel, entidades más suplantadas | ✅ Adoptado | Gabriel (G4, G6) |
+| Buzón: pestañas Todos/Bandeja/Spam/Cuarentena/**Pendientes**, buscador, selector de escenario + "Simular llegada", detalle con contenido difuminado y enlaces neutralizados | ✅ Adoptado | Gabriel (G3, G5) |
+| Analizador: expediente técnico + **acciones en 1 clic: Aprobar/Marcar seguro · Escalar a CISO · Bloquear dominio** + "Evaluar correo manual" | ✅ Adoptado | Williams (X3) + Gabriel (G7) |
+| Bitácora inmutable: sello "Cadena íntegra · N registros", Verificar integridad, filtros, **Exportar CSV** | ✅ Adoptado | Gabriel (G2, G6) |
+| **Consola de Soporte** (solo Master): estado del motor IA / D1 / correo, **cambiar a modo reglas**, **restablecer demo**, lista de dominios bloqueados | ✅ Adoptado | Anthony (A6) |
+| Badge "Explicación generada por IA · GLM-4.7 Flash" | ✏️ Cambia a **Llama 3.3 70B** (modelo real) | Todos |
+| **IP de origen, país, ASN y "dominio creado hace 48 horas"** | ❌ **Descartado del MVP**: requiere consultas externas (WHOIS/geolocalización); sin ellas serían datos inventados y rompe la regla "cero invención". Queda en el roadmap. | — |
+| Pantalla del **Asistente** | ⚠️ No está en el prototipo: se construye con §5.5 y el kit de componentes | Anthony (A4) |
+
 ## 5. Pantallas
 
 ### 5.1 Mapa de navegación y permisos por rol
 
-| Pantalla | Ruta | ANALYST | SUPERVISOR | ADMIN | Dueño |
+| Pantalla | Ruta | Analista (ANALYST) | CISO (SUPERVISOR) | Master (ADMIN) | Dueño |
 |---|---|---|---|---|---|
 | Login | `/login` | ✅ | ✅ | ✅ | Gabriel |
 | Panel | `/` | ✅ (sin cola de revisión) | ✅ | ✅ | Gabriel |
@@ -178,6 +211,7 @@ Gabriel implementa **todos** estos campos (PR G4) y los dibuja (PR G6).
 | Analizador | `/analizar` | ✅ | ✅ | ✅ | Williams (diseño de Alejandro) |
 | Asistente | `/asistente` | ✅ | ✅ | ✅ | Anthony |
 | Bitácora | `/bitacora` | ❌ | ✅ ver | ✅ ver + verificar cadena | Gabriel |
+| Consola de Soporte | `/soporte` | ❌ | ❌ | ✅ | Anthony |
 
 Lo que el rol no permite **no se muestra** (no se deshabilita): el menú y los botones cambian según `GET /auth/me`.
 
