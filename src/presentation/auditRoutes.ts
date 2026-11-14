@@ -35,3 +35,21 @@ auditRoutes.get("/export.csv", requireRole("SUPERVISOR") as never, async (c) => 
     headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="bitacora-ci-${stamp}.csv"`, "cache-control": "no-store" },
   });
 });
+
+/** G6 · GET /audit/events — bitácora para la pantalla (CISO y Master). Filtros: module, level, q; límite 200. */
+const EVENT_COLUMNS = "id, created_at, module, actor, risk_level, risk_score, action_taken, email_id, xai_explanation, ai_used, ai_model, prev_hash, hash";
+auditRoutes.get("/events", requireRole("SUPERVISOR") as never, async (c) => {
+  const module = c.req.query("module");
+  const level = c.req.query("level");
+  const q = (c.req.query("q") ?? "").trim().toLowerCase();
+  const where: string[] = [];
+  const binds: unknown[] = [];
+  if (module && /^[A-Z_]+$/.test(module)) { where.push("module = ?"); binds.push(module); }
+  if (level && /^(SAFE|LOW|HIGH|CRITICAL)$/.test(level)) { where.push("risk_level = ?"); binds.push(level); }
+  if (q) { where.push("(lower(actor) LIKE ? OR lower(action_taken) LIKE ? OR lower(coalesce(xai_explanation,'')) LIKE ? OR hash LIKE ?)"); binds.push(`%${q}%`, `%${q}%`, `%${q}%`, `${q}%`); }
+  const sql = `SELECT ${EVENT_COLUMNS} FROM audit_events ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY created_at DESC LIMIT 200`;
+  const r = await c.env.DB.prepare(sql).bind(...binds).all<Record<string, unknown>>();
+  const total = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM audit_events").first<{ n: number }>();
+  c.header("cache-control", "no-store");
+  return c.json({ total: total?.n ?? 0, events: (r.results ?? []).map((e) => ({ ...e, ai_used: e.ai_used === 1 })) });
+});
