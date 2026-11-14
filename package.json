@@ -1,0 +1,39 @@
+{
+  "name": "c-i",
+  "version": "0.1.0",
+  "private": true,
+  "description": "C&I: sistema inteligente contra el phishing en el correo corporativo de la banca venezolana",
+  "type": "module",
+  "scripts": {
+    "dev": "npm run build:web && wrangler dev",
+    "dev:web": "vite web",
+    "build:web": "vite build web",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json",
+    "test": "vitest run",
+    "guard": "node scripts/guard.mjs",
+    "check": "npm run typecheck && npm run test && npm run guard && npm run build:web",
+    "smoke": "node scripts/smoke.mjs",
+    "db:migrate:local": "wrangler d1 migrations apply c-i-db --local",
+    "db:seed:local": "wrangler d1 execute c-i-db --local --file=seed/seed_mailbox.sql"
+  },
+  "dependencies": {
+    "hono": "^4.13.18",
+    "lucide-react": "^1.72.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261114.1",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0",
+    "wait-on": "^9.5.1",
+    "wrangler": "^4.162.0"
+  }
+}
