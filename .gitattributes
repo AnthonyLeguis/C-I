@@ -1,0 +1,11 @@
+# Finales de línea consistentes entre Windows y Linux
+* text=auto eol=lf
+
+# Archivos binarios: nunca convertir
+*.pdf binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.ico binary
+*.woff binary
+*.woff2 binary
