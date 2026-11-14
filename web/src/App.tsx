@@ -6,6 +6,7 @@ import { api } from "./services/apiClient";
 import type { HealthResponse } from "./types/contracts";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
 import { UiShowcase } from "./pages/UiShowcase";
+import { AssistantPreview } from "./pages/AssistantPreview";
 
 type Status = { kind: "loading" } | { kind: "ok"; data: HealthResponse } | { kind: "error"; message: string };
 
@@ -19,6 +20,7 @@ const LEVELS = [
 export function App() {
   // Enrutado temporal: /ui muestra el kit (X2). G5 reemplaza esto con el enrutado real.
   if (window.location.pathname === "/ui") return <UiShowcase />;
+  if (window.location.pathname === "/asistente") return <AssistantPreview />;
   return <StatusPage />;
 }
 
