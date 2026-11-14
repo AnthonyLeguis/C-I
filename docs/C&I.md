@@ -12,7 +12,7 @@
 | **Anthony Leguisamo** | Desarrollador · Líder técnico | M0 — Núcleo, IA, guardián ético, CI/CD, despliegue e integración |
 | **Williams Mejía**    | Desarrollador                 | M1 — Motor de análisis de correo + marco legal venezolano        |
 | **Gabriel Flores**    | Desarrollador                 | M2 — Buzón institucional, cuarentena, roles (RBAC) y panel       |
-| **Alejandro Sánchez** | UX/UI                         | M3 — Sistema de diseño, pantallas, deck, video y pitch           |
+| **Alejandro Sánchez** | UX/UI (sin GitHub: entrega por chat interno) | M3 — Diseño de pantallas y componentes, deck, video y pitch |
 
 ---
 
@@ -118,7 +118,7 @@ Fuentes: web del evento, `/agente-spec`, `/en-vivo`, `/remoto` y _Manual de desp
 
 - "**Williams**: el cerebro que analiza el correo y el catálogo legal (SUDEBAN, Ley de Delitos Informáticos), porque conoce la normativa."
 - "**Gabriel**: el buzón con sus carpetas, el inicio de sesión con roles y el panel de indicadores."
-- "**Alejandro**: el diseño de todas las pantallas con la guía de estilos de Williams; después el deck, el video y el pitch."
+- "**Alejandro**: diseña todas las pantallas con la guía de estilos y nos las manda por el chat interno; Anthony y Williams las convierten en código. Después hace el deck, el video y el pitch."
 - "**Yo**: la base del proyecto, la IA, el guardián ético, las pruebas automáticas y la publicación."
 
 **Min 11–15 · Reglas**
@@ -136,7 +136,7 @@ Fuentes: web del evento, `/agente-spec`, `/en-vivo`, `/remoto` y _Manual de desp
 - [ ] Node 20+ y Git instalados (`node -v`, `git --version`).
 - [ ] Repo clonado, `npm install` y `npm run check` en verde.
 - [ ] Su orden de trabajo abierta (Sección 5.3).
-- [ ] Alejandro: además, acceso al repo para editar `web/` y la carpeta `docs/`.
+- [ ] Alejandro: no necesita GitHub ni instalar nada; entrega sus diseños y textos por el chat interno (`PLAN_PRS.md` §2.4).
 
 ---
 
@@ -190,18 +190,18 @@ c-i/
 │   └── presentation/  mailRoutes.ts (Williams) · mailboxRoutes.ts · authRoutes.ts · dashboardRoutes.ts (Gabriel) · assistantRoutes.ts (Anthony)
 ├── test/              emailHeuristics.test.ts (Williams) · auth.test.ts · mailbox.test.ts (Gabriel) · pii.test.ts · guard.test.ts (Anthony)
 ├── web/src/
-│   ├── styles/tokens.css            # Alejandro (guía de estilos)
+│   ├── styles/index.css             # Anthony (tema según el diseño de Alejandro)
 │   ├── types/contracts.ts · services/apiClient.ts · hooks/   # Anthony (contratos) / Gabriel (hooks)
 │   ├── components/
-│   │   ├── ui/          # Alejandro: Button, Card, Badge, RiskMeter, Topbar, Sidebar
-│   │   ├── analyzer/    # Alejandro (diseño) + Williams (datos)
+│   │   ├── ui/          # Anthony (diseño de Alejandro): Button, Card, Badge, RiskMeter, Topbar, Sidebar
+│   │   ├── analyzer/    # Williams (diseño de Alejandro)
 │   │   ├── mailbox/     # Gabriel
 │   │   ├── dashboard/   # Gabriel
 │   │   └── assistant/   # Anthony
 │   └── pages/  Login.tsx · Dashboard.tsx · Mailbox.tsx · Analyzer.tsx · Assistant.tsx
 ├── scripts/  guard.mjs · smoke.mjs
 ├── .github/  workflows/ci.yml · workflows/deploy.yml · protection.json
-└── docs/  DEMO_CASES.md · PITCH_SCRIPT.md · CHECKPOINTS.md · LEGAL_NOTES.md · design/ (capturas de Alejandro)
+└── docs/  DEMO_CASES.md · PITCH_SCRIPT.md · CHECKPOINTS.md · LEGAL_NOTES.md · design/ (diseños de Alejandro, subidos por Anthony)
 ```
 
 ### 4.4 Reglas inviolables
@@ -406,7 +406,9 @@ git add -A && git commit -m "feat(<modulo>): <qué hice>" && git push
 
 > "Lee `C&I.md` (Secciones 4, 5 y 6). Backend: (1) `hash.ts`: PBKDF2-SHA256 con WebCrypto (100 000 iteraciones, salt aleatorio) y SHA-256 para la cadena de auditoría. (2) `auth.ts`: login que verifica la contraseña y emite una cookie `HttpOnly; Secure; SameSite=Strict` con token firmado HMAC (secreto `SESSION_SECRET`, expira en 8 h); middleware `requireRole('ANALYST'|'SUPERVISOR'|'ADMIN')` con jerarquía. (3) `0002_demo_users.sql` con 3 usuarios de demo (admin, supervisor, analista) con hash precalculado; las contraseñas de demo se muestran en la pantalla de login. (4) `d1Repos.ts`: repositorios de correos y auditoría (el repositorio de auditoría calcula `hash = SHA256(prev_hash + datos del evento)`). (5) Rutas `/auth/*`, `/mailbox`, `/mailbox/deliver`, `/mailbox/:id/review`, `/dashboard` y `/audit/verify` según la Sección 5.2. Frontend con los componentes de Alejandro (`components/ui`): Login; Buzón estilo cliente de correo con pestañas Bandeja/Spam/Cuarentena, contador de cada una y detalle del correo con indicadores, fundamento legal y botones 'Confirmar amenaza' y 'Restaurar a bandeja' (solo SUPERVISOR+); Dashboard con 4 KPI, gráfico de barras de entidades más suplantadas y tabla de últimos eventos con su hash. Botón 'Simular llegada de correo' que llama a `/mailbox/deliver` con un caso de `DEMO_CASES.md`. Mínimo 6 tests."
 
-#### 📌 Alejandro — M3: UX/UI, deck, video y pitch · rama `feat/ux-ui`
+#### 📌 Alejandro — M3: UX/UI, deck, video y pitch · **sin GitHub (entrega por chat interno)**
+
+> ⚠️ **Actualizado:** Alejandro diseña y entrega por chat (entregables **D0–D5** de `PLAN_PRS.md` §2.4). El código de UI lo implementan Anthony (X1 tema, X2 componentes), Williams (X3 Analizador) y Gabriel + Anthony (X4 pulido) usando la descripción de abajo como especificación.
 
 **Archivos:** `web/src/styles/tokens.css`, `tailwind.config.ts` (solo la sección `theme`), `web/src/components/ui/*`, `web/src/components/analyzer/*`, `web/src/pages/Analyzer.tsx`, `docs/design/*`, `docs/PITCH_SCRIPT.md`, `README.md` (redacción), deck y video.
 
@@ -606,7 +608,7 @@ Solo Anthony hace merge en `qa`, `development` y `main`. Reparto completo de PR 
 | **F2 Integración** | Sáb 03:00–05:00 | Anthony + quien esté despierto | Todo en `development`, primer `development → main`, **primera entrega en `/remoto`**                                                                                                                         |
 | **F3 Pulido**      | Sáb 08:00–12:30 | Todos                          | UI final, casos de demo, README, SPEC, cifras, video                                                                                                                                                         |
 
-**Orden de merge en cada checkpoint:** Alejandro (UI base) → Williams (motor) → Gabriel (buzón/roles) → Anthony (guardián). Los archivos compartidos solo los modifica Anthony.
+**Orden de merge en cada checkpoint:** UX base (X1/X2) → Williams (motor) → Gabriel (buzón/roles) → Anthony (guardián). Los archivos compartidos solo los modifica Anthony.
 
 **Turnos de descanso (protocolo `/en-vivo`):**
 
@@ -798,7 +800,7 @@ docker compose up --build --abort-on-container-exit --exit-code-from smoke
 
 | #   | Hora          | Foco                                                                                                           |
 | --- | ------------- | -------------------------------------------------------------------------------------------------------------- |
-| CP0 | **Vie 23:00** | Staging y producción responden `/health`; CI verde; los 4 pasaron `npm run check`; bocetos de Alejandro listos |
+| CP0 | **Vie 23:00** | Staging y producción responden `/health`; CI verde; los 4 pasaron `npm run check`; bocetos de Alejandro subidos a `docs/design/` listos |
 | CP1 | **Sáb 01:00** | Motor de correo y login en QA; buzón con seed                                                                  |
 | CP2 | **Sáb 03:00** | Buzón + cuarentena + revisión + guardián. **Primer `qa → development → main` y primera entrega en `/remoto`**  |
 | CP3 | **Sáb 05:00** | Regresión del turno de madrugada (lo dirige Gabriel si Anthony duerme)                                         |
@@ -810,7 +812,7 @@ docker compose up --build --abort-on-container-exit --exit-code-from smoke
 **Procedimiento de cada checkpoint:**
 
 1. Aviso 10 minutos antes: "push de lo que funcione".
-2. `gh pr list --base qa` → aprobar y hacer merge a `qa` solo de los PR con CI verde (orden: Alejandro → Williams → Gabriel → Anthony): `gh pr review <n> --approve && gh pr merge <n> --squash`.
+2. `gh pr list --base qa` → aprobar y hacer merge a `qa` solo de los PR con CI verde (orden: UX base → Williams → Gabriel → Anthony): `gh pr review <n> --approve && gh pr merge <n> --squash`.
 3. `gh run watch` → despliegue al entorno QA + smoke. Luego correr el **agente QA** ([PLAN_PRS.md](PLAN_PRS.md) §4.2); si aprueba, PR `qa → development`.
 4. `docker compose up --build --abort-on-container-exit --exit-code-from smoke`.
 5. Prueba humana en el teléfono (datos móviles): 3 casos de `DEMO_CASES.md`, login con cada rol.
