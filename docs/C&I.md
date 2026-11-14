@@ -247,6 +247,7 @@ c-i/
 - **Datos 100 % sintéticos.** Dominios de demo: `banco-demo.com.ve` (legítimo) y variantes falsas. Los nombres de bancos reales solo aparecen en la **lista de dominios oficiales** para detectar imitaciones.
 - **Cero invención legal:** la IA nunca escribe números de artículo; los toma de `legalCatalog.ts`.
 - Cada respuesta indica `ai_used` y `ai_model`.
+- **Frontend fluido y animado:** toda pantalla y componente cumple la regla de movimiento de `PLAN_UX.md` §1.1 (animaciones empresariales, solo `transform`/`opacity`, ≤ 700 ms, `prefers-reduced-motion`) y es responsive de 390 a 1920 px.
 
 ---
 

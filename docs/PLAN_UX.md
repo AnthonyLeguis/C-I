@@ -17,6 +17,34 @@
 
 ---
 
+## 1.1 Regla obligatoria de movimiento: interfaz fluida, con animaciones empresariales y dinámicas
+
+**Todo elemento del frontend debe sentirse fluido.** Las animaciones son sobrias (estilo banca/SaaS empresarial), rápidas y con propósito: guían la atención, nunca la distraen. El agente QA lo revisa en cada PR de pantallas.
+
+| Elemento | Animación obligatoria | Duración / curva |
+|---|---|---|
+| Cambio de pantalla | Fundido + desplazamiento corto hacia arriba (8 px) | 220 ms · `cubic-bezier(.16,1,.3,1)` |
+| Tarjetas y listas al cargar | Aparición escalonada (cada ítem 40 ms después del anterior) | 260 ms |
+| KPI (números) | Conteo animado de 0 al valor | 600 ms · ease-out |
+| `RiskMeter` | La barra se llena y el marcador ▲ se desliza hasta el puntaje | 700 ms · ease-out |
+| Hover en tarjetas y filas | Elevación sutil (sombra + `translateY(-1px)`) | 150 ms |
+| Botones | Presión al hacer clic (`scale(.98)`) y foco visible | 120 ms |
+| Correo nuevo en el buzón ("Simular llegada") | Entra deslizándose + destello del color de su nivel | 400 ms |
+| Cambio de carpeta (cuarentena ↔ bandeja) | El ítem sale con fundido y el contador se actualiza animado | 250 ms |
+| Menú lateral | Deslizamiento con fondo oscurecido | 240 ms |
+| Toasts ("Decisión registrada…") | Entran desde abajo a la derecha y se van solos a los 4 s | 250 ms |
+| Carga de datos | *Skeleton* con brillo que recorre (nunca un spinner solo) | 1,2 s en bucle |
+| Cambio de tema claro/oscuro | Transición de colores | 400 ms |
+| Indicadores en vivo (IA en línea, pendientes) | Pulso suave | 1,6 s en bucle |
+
+**Reglas técnicas:**
+- Animar solo `transform` y `opacity` (y colores en el cambio de tema): nunca `width`, `height` ni `top`, para mantener 60 fps.
+- Nada de rebotes, giros ni efectos llamativos: el tono es institucional.
+- Ninguna animación bloquea la interacción ni dura más de 700 ms (salvo los bucles de carga y pulso).
+- **Accesibilidad:** con `prefers-reduced-motion` todo se desactiva (ya está en `styles/index.css`).
+- Diseño **responsive y fluido**: de 390 px (teléfono) a 1920 px (proyector), sin scroll horizontal; tipografía y espaciados escalan con el ancho.
+- Las utilidades compartidas (`animate-enter`, `stagger`, `CountUp`, `Skeleton`, `PageTransition`) las crea **Anthony en X2**; nadie escribe animaciones propias fuera de ellas.
+
 ## 2. Sistema de diseño
 
 ### 2.1 Colores (tokens) — paleta oficial basada en `Dashboard_RC` (actualizada 13/11)
@@ -299,6 +327,8 @@ Lo que el rol no permite **no se muestra** (no se deshabilita): el menú y los b
 ---
 
 ## 8. Checklist de calidad visual (lo revisa el agente QA en X4)
+
+- [ ] Cumple la regla de movimiento §1.1: transiciones en pantallas, listas, KPI, medidor, hover y toasts; solo `transform`/`opacity`; nada supera 700 ms.
 
 - [ ] Contraste WCAG AA (texto ≥ 4.5:1; usar un verificador de contraste).
 - [ ] Todo se puede usar con teclado (Tab) y el foco se ve.
