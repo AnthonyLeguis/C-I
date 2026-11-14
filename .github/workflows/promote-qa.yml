@@ -2,7 +2,8 @@
 # Se ejecuta cuando el despliegue de `qa` termina con éxito (npm run check + prueba de humo contra el
 # entorno QA). Si `qa` tiene commits que `development` no tiene, abre (o reutiliza) el PR qa → development
 # y lo une. Luego dispara timeline-qa para actualizar el avance del equipo.
-# `main` (producción) sigue siendo manual.
+# `main` (producción) sigue siendo manual: este workflow deja abierto el PR development → main
+# ("candidato a release"), que espera la aprobación de Anthony. GitHub le notifica para decidir.
 name: promote-qa
 on:
   workflow_run:
@@ -52,3 +53,23 @@ jobs:
       - name: Actualizar timeline-qa
         if: steps.diff.outputs.skip == ''
         run: gh workflow run timeline-qa.yml --ref development
+      - name: Dejar listo el candidato a release (development → main), esperando aprobación
+        if: steps.diff.outputs.skip == ''
+        run: |
+          git fetch origin main development
+          if [ "$(git rev-list --count origin/main..origin/development)" = "0" ]; then exit 0; fi
+          R=$(gh pr list --base main --head development --state open --json number --jq '.[0].number')
+          LIST=$(git log --no-merges --format='- %s' origin/main..origin/development | head -40)
+          BODY="## Candidato a release · ¿todo bien para pasar a producción?
+
+          Todo lo de abajo ya pasó QA (tests, reglas, build y prueba de humo) y está estable en **development**.
+
+          **Antes de aprobar:** prueba en https://c-i-qa.equipo-ci.workers.dev y corre el agente QA con IA (PLAN_PRS.md §4.2).
+          **Para publicar:** aprueba y une este PR. Producción se despliega sola.
+
+          $LIST"
+          if [ -z "$R" ]; then
+            gh pr create --base main --head development --title "Release candidato: development → main (requiere aprobación)" --body "$BODY" --assignee AnthonyLeguis --reviewer AnthonyLeguis || gh pr create --base main --head development --title "Release candidato: development → main (requiere aprobación)" --body "$BODY"
+          else
+            gh pr edit "$R" --body "$BODY"
+          fi
