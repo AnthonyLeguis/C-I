@@ -14,3 +14,4 @@ export * from "./States";
 export * from "./ThemeToggle";
 export * from "./Toast";
 export * from "./Topbar";
+export * from "./Tooltip";

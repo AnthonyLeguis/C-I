@@ -1,7 +1,7 @@
 // Bitácora de Eventos (PR G6 · PLAN_UX §5.6): tabla en consola, filtros, verificar integridad (Master) y CSV.
 import { Download, Search, ShieldCheck, ShieldX } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { AlertBadge, Button, ErrorState, Skeleton, useToast } from "../components/ui";
+import { AlertBadge, Button, ErrorState, Skeleton, Tooltip, useToast } from "../components/ui";
 import { useSession } from "../hooks/useSession";
 import { api } from "../services/apiClient";
 import type { AuditEventsResponse } from "../types/contracts";
@@ -71,8 +71,8 @@ export function AuditLogPage() {
                   <td className="p-3 font-mono text-xs">{e.module}</td>
                   <td className="p-3">{e.actor}</td>
                   <td className="p-3">{e.risk_level ? <AlertBadge level={e.risk_level} /> : <span className="text-slate-500">—</span>}</td>
-                  <td className="max-w-[340px] p-3"><span className="font-semibold">{e.action_taken}</span>{e.xai_explanation && <p className="line-clamp-2 text-xs text-slate-400" title={e.xai_explanation}>{e.xai_explanation}</p>}</td>
-                  <td className="p-3"><button type="button" title="Copiar hash" onClick={() => { void navigator.clipboard?.writeText(e.hash); toast.notify("info", "Hash copiado", e.hash.slice(0, 24)); }} className="font-mono text-xs text-ai hover:underline">{e.hash.slice(0, 10)}…</button></td>
+                  <td className="max-w-[340px] p-3"><span className="font-semibold">{e.action_taken}</span>{e.xai_explanation && <Tooltip content={e.xai_explanation} wide className="block"><p className="line-clamp-2 text-xs text-slate-400">{e.xai_explanation}</p></Tooltip>}</td>
+                  <td className="p-3"><Tooltip content="Copiar hash completo"><button type="button" onClick={() => { void navigator.clipboard?.writeText(e.hash); toast.notify("info", "Hash copiado", e.hash.slice(0, 24)); }} className="font-mono text-xs text-ai hover:underline">{e.hash.slice(0, 10)}…</button></Tooltip></td>
                 </tr>
               ))}
               {data.events.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-slate-400">No hay eventos con esos filtros.</td></tr>}

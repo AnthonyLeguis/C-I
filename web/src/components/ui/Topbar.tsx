@@ -1,24 +1,17 @@
-// Barra superior (distribución del Dashboard_RC): título de la vista a la izquierda; a la derecha el estado
-// de la IA, las notificaciones (casos pendientes de revisión) y el perfil con su menú (nombre, rol y cerrar
-// sesión). El selector claro/oscuro vive en el pie del menú lateral.
+// Barra superior (distribución del Dashboard_RC): título de la vista a la izquierda; a la derecha las notificaciones (casos pendientes de revisión) y el perfil con su menú (nombre, rol y cerrar
+// sesión). El selector claro/oscuro vive en el pie del menú lateral; el estado de la IA, en la Consola de Soporte.
 import { Bell, BellOff, ChevronDown, LogOut, Menu } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import type { AiStatus, DashboardResponse, Role } from "../../types/contracts";
+import type { DashboardResponse, Role } from "../../types/contracts";
 import { AlertBadge } from "./Badges";
 import { ROLE_LABEL } from "./levels";
-
-const AI_STATUS: Record<AiStatus, { text: string; cls: string }> = {
-  ONLINE: { text: "IA EN LÍNEA", cls: "border-safe/40 bg-safe-soft text-safe" },
-  FALLBACK: { text: "MODO REGLAS", cls: "border-high/40 bg-high-soft text-high" },
-  UNKNOWN: { text: "IA SIN VERIFICAR", cls: "border-line-strong bg-surface-2 text-ink-2" },
-};
+import { Tooltip } from "./Tooltip";
 
 export type PendingCase = DashboardResponse["review_queue"][number];
 
 export interface TopbarProps {
   title: string;
   subtitle?: string;
-  aiStatus: AiStatus;
   user?: { display_name: string; role: Role };
   onMenu: () => void;
   onLogout?: () => void;
@@ -48,8 +41,7 @@ function useDismiss(ref: RefObject<HTMLElement | null>, open: boolean, close: ()
 const panelCls = (open: boolean) =>
   `absolute right-0 top-[calc(100%+10px)] z-50 origin-top-right overflow-hidden rounded-card border border-line bg-surface shadow-[0_18px_40px_-12px_rgba(2,6,23,0.35)] transition-[opacity,transform,visibility] duration-200 ease-[cubic-bezier(.16,1,.3,1)] ${open ? "visible scale-100 opacity-100" : "invisible pointer-events-none scale-95 opacity-0"}`;
 
-export function Topbar({ title, subtitle, aiStatus, user, onMenu, onLogout, pending, onOpenCase, actions }: TopbarProps) {
-  const ai = AI_STATUS[aiStatus];
+export function Topbar({ title, subtitle, user, onMenu, onLogout, pending, onOpenCase, actions }: TopbarProps) {
   return (
     <header className="glass sticky top-0 z-30 flex h-[72px] items-center gap-3 border-b border-line px-4 sm:px-6">
       <button type="button" onClick={onMenu} aria-label="Abrir menú" className="press rounded-control border border-line bg-surface p-2 text-ink-2 hover:text-ink lg:hidden">
@@ -61,10 +53,6 @@ export function Topbar({ title, subtitle, aiStatus, user, onMenu, onLogout, pend
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {actions}
-        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${ai.cls}`} title={ai.text}>
-          <span className="h-2 w-2 rounded-full bg-current animate-ci-pulse" aria-hidden />
-          <span className="hidden md:inline">{ai.text}</span>
-        </span>
         {pending && <Notifications count={pending.count} items={pending.items} onOpenCase={onOpenCase} />}
         {user && <ProfileMenu name={user.display_name} role={user.role} onLogout={onLogout} />}
       </div>
@@ -80,13 +68,15 @@ function Notifications({ count, items, onOpenCase }: { count: number; items: Pen
 
   return (
     <div className="relative" ref={ref}>
-      <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open} aria-label={label} title={label}
+      <Tooltip content={label} side="bottom" disabled={open}>
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open} aria-label={label}
         className={`press relative inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors ${open ? "border-line-strong bg-surface-2 text-ink" : "border-transparent text-ink-2 hover:border-line hover:bg-surface-2 hover:text-ink"}`}>
         <Bell size={18} aria-hidden className={count > 0 ? "origin-top animate-[ci-ring_2.4s_ease-in-out_infinite]" : ""} />
         {count > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-critical px-1 text-[10px] font-bold text-white ring-2 ring-surface">{count > 9 ? "9+" : count}</span>
         )}
       </button>
+      </Tooltip>
 
       <div role="menu" aria-hidden={!open} className={`${panelCls(open)} w-[min(22rem,calc(100vw-2rem))]`}>
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
