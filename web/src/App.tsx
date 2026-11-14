@@ -5,6 +5,7 @@ import { AppShell } from "./components/layout/AppShell";
 import { PendingScreen } from "./components/layout/PendingScreen";
 import { SkeletonCard, ToastProvider } from "./components/ui";
 import { SessionProvider, useSession } from "./hooks/useSession";
+import { AnalyzerPage } from "./pages/Analyzer";
 import { AssistantPage } from "./pages/Assistant";
 import { AuditLogPage } from "./pages/AuditLog";
 import { DashboardPage } from "./pages/Dashboard";
@@ -43,7 +44,7 @@ function Routes() {
       {route === "buzon" && <MailboxPage />}
       {route === "asistente" && <AssistantPage />}
       {route === "panel" && <DashboardPage />}
-      {route === "analizar" && <PendingScreen name="Analizador de Casos" owner="Williams (X3)" mock="10-analizador-expediente.jpg" />}
+      {route === "analizar" && <AnalyzerPage />}
       {route === "bitacora" && <AuditLogPage />}
       {route === "soporte" && <PendingScreen name="Consola de Soporte" owner="Anthony (A6)" mock="14-consola-soporte.jpg" />}
     </AppShell>
