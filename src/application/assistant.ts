@@ -1,19 +1,26 @@
 // [CAPA 2 — APLICACIÓN] Caso de uso del asistente con guardián ético (PR A3 · Anthony).
-// Flujo: anonimizar → reglas del guardián → Llama Guard (segunda opinión) → modelo de chat → registro en bitácora.
+// Flujo: anonimizar → reglas del guardián → contexto cerrado (solo temas del sistema) → Llama Guard (segunda opinión)
+// → modelo de chat con el FAQ del proyecto → registro en bitácora.
 import type { AiGatewayPort, AuditRepositoryPort } from "../domain/ports";
 import type { PiiType } from "../domain/types";
 import { evaluateGuardRules, type BlockReason } from "../infrastructure/ethicsGuard";
 import { sanitizePii } from "../infrastructure/piiSanitizer";
+import { FAQ_CONTEXT, OUT_OF_SCOPE_ANSWER, faqAnswer, isInScope, normalizeOutOfScope } from "./assistantScope";
 
-export const ASSISTANT_SYSTEM_PROMPT = `Eres C&I, asistente de ciberseguridad para el personal de la banca venezolana.
-Tu prioridad es la Tríada CIA (confidencialidad, integridad y disponibilidad).
+export const ASSISTANT_SYSTEM_PROMPT = `Eres el asistente del sistema C&I (detección de phishing en el correo corporativo de la banca venezolana).
+Trabajas con CONTEXTO CERRADO: solo respondes sobre (a) el uso y funcionamiento del sistema C&I y (b) cómo reconocer o actuar ante correos sospechosos dentro del banco.
+Si la pregunta trata de cualquier otra cosa, responde EXACTAMENTE, sin agregar nada: ${OUT_OF_SCOPE_ANSWER}
 Solo defiendes: nunca generas exploits, malware, técnicas de evasión ni formas de saltar controles.
-Nunca inventas datos ni números de artículos legales; si no tienes el dato, lo dices.
+Nunca inventas datos ni números de artículos legales; usa solo lo que está en el contexto del sistema.
 Recibes textos ya anonimizados (marcadores como [CEDULA_PROTEGIDA]); no intentes reconstruir datos personales.
-Responde en español claro, en máximo 6 líneas, con este formato:
+Responde en español claro, en máximo 6 líneas. Si la pregunta es sobre un correo sospechoso, usa este formato:
 Hallazgo: ...
 Riesgo: ...
-Acción recomendada: ...`;
+Acción recomendada: ...
+Si es una duda de uso del sistema, responde en pasos breves.
+
+Contexto del sistema (FAQ oficial del proyecto):
+${FAQ_CONTEXT}`;
 
 export const BLOCKED_ANSWER =
   "C&I está diseñado exclusivamente para la defensa y protección del banco. No puedo ayudar con esa petición, " +
@@ -34,6 +41,7 @@ export interface AskResult {
   pii_masked: PiiType[];
   blocked: boolean;
   block_reasons: BlockReason[];
+  out_of_scope: boolean;
   answer: string;
   ai_used: boolean;
   ai_model: string | null;
@@ -55,8 +63,11 @@ export async function askAssistant(input: AskInput, deps: AssistantDeps): Promis
   let aiUsed = false;
   let aiModel: string | null = null;
 
-  // 3. Segunda opinión con Llama Guard solo si las reglas lo dejaron pasar.
-  if (reasons.size === 0) {
+  // 3. Contexto cerrado: si no trata del sistema ni del correo del banco, no se consulta a la IA.
+  let outOfScope = reasons.size === 0 && !isInScope(sanitized);
+
+  // 4. Segunda opinión con Llama Guard solo si las reglas lo dejaron pasar y está dentro del contexto.
+  if (reasons.size === 0 && !outOfScope) {
     const unsafe = await deps.ai.isUnsafe(sanitized);
     if (unsafe !== null) {
       aiUsed = true;
@@ -66,21 +77,23 @@ export async function askAssistant(input: AskInput, deps: AssistantDeps): Promis
   }
 
   const blocked = reasons.size > 0;
-  let answer = BLOCKED_ANSWER;
+  let answer = blocked ? BLOCKED_ANSWER : OUT_OF_SCOPE_ANSWER;
 
-  // 4. Si es legítima, responde el modelo de chat (o el texto de respaldo si la IA no está).
-  if (!blocked) {
+  // 5. Si es legítima y del sistema, responde el modelo con el FAQ (o el FAQ directo si la IA no está).
+  if (!blocked && !outOfScope) {
     const reply = await deps.ai.complete(ASSISTANT_SYSTEM_PROMPT, sanitized);
     if (reply !== null) {
-      answer = reply;
       aiUsed = true;
       aiModel = deps.ai.lastModelUsed ?? deps.ai.modelName;
+      const off = normalizeOutOfScope(reply);
+      outOfScope = off !== null;
+      answer = off ?? reply;
     } else {
-      answer = OFFLINE_ANSWER;
+      answer = faqAnswer(sanitized) ?? OFFLINE_ANSWER;
     }
   }
 
-  // 5. Bitácora (CA7): todo intento queda registrado, sin el texto original.
+  // 6. Bitácora (CA7): todo intento queda registrado, sin el texto original.
   if (deps.audit) {
     await deps.audit.append({
       module: "ASSISTANT_GUARD",
@@ -88,11 +101,11 @@ export async function askAssistant(input: AskInput, deps: AssistantDeps): Promis
       actor: input.actor,
       riskLevel: blocked ? "CRITICAL" : null,
       riskScore: blocked ? 100 : null,
-      actionTaken: blocked ? "BLOCKED" : detected.length > 0 ? "SANITIZED" : "ALLOWED",
+      actionTaken: blocked ? "BLOCKED" : outOfScope ? "OUT_OF_SCOPE" : detected.length > 0 ? "SANITIZED" : "ALLOWED",
       indicators: rules.matches,
       legalBasis: [],
       piiDetected: detected,
-      xaiExplanation: blocked ? `Bloqueado por: ${[...reasons].join(", ")}` : null,
+      xaiExplanation: blocked ? `Bloqueado por: ${[...reasons].join(", ")}` : outOfScope ? "Pregunta fuera del contexto del sistema" : null,
       aiUsed,
       aiModel,
     });
@@ -103,6 +116,7 @@ export async function askAssistant(input: AskInput, deps: AssistantDeps): Promis
     pii_masked: detected,
     blocked,
     block_reasons: [...reasons],
+    out_of_scope: outOfScope,
     answer,
     ai_used: aiUsed,
     ai_model: aiModel,

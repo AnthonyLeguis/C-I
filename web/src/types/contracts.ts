@@ -84,6 +84,8 @@ export interface AskResponse {
   pii_masked: string[];
   blocked: boolean;
   block_reasons: ("PROMPT_INJECTION" | "OFFENSIVE_REQUEST")[];
+  /** Contexto cerrado: la pregunta no trata del sistema C&I ni del correo del banco. */
+  out_of_scope?: boolean;
   answer: string;
   ai_used: boolean;
   ai_model: string | null;
