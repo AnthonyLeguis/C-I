@@ -79,3 +79,9 @@ export const ROLE_RANK: Record<Role, number> = { ANALYST: 1, SUPERVISOR: 2, ADMI
 export function hasRole(userRole: Role, required: Role): boolean {
   return ROLE_RANK[userRole] >= ROLE_RANK[required];
 }
+
+/** Origen de la explicación de un correo: redactada por la IA (y con qué modelo) o por el motor de reglas. */
+export interface AiOrigin {
+  aiUsed: boolean;
+  aiModel: string | null;
+}

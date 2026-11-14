@@ -2,16 +2,16 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AppEnv } from "../env";
-import type { Indicator } from "../domain/types";
+import type { AiOrigin, Indicator } from "../domain/types";
 import { effectiveAi } from "../infrastructure/systemSettings";
 import { DEMO_SCENARIOS, findScenario } from "../application/demoScenarios";
 import { analyzeEmail } from "../application/analyzeEmail";
 import type { MailAnalyzer } from "../application/interimAnalyzer";
 import { approveEmail, escalateEmail } from "../application/actions";
-import { deliverEmail, listMailbox, reviewEmail, type MailboxEmail, type MailboxStorePort } from "../application/mailbox";
+import { attachAiOrigin, deliverEmail, listMailbox, reviewEmail, type MailboxEmail, type MailboxStorePort } from "../application/mailbox";
 import { domainStoreFor } from "../infrastructure/domainStore";
 import { getCurrentUser, requireRole } from "../infrastructure/auth";
-import { AuditRepository, emailRepository } from "../infrastructure/d1Repos";
+import { AuditRepository, aiOriginByEmail, emailRepository } from "../infrastructure/d1Repos";
 import { parseEmail } from "../infrastructure/emailParser";
 import { sanitizePii } from "../infrastructure/piiSanitizer";
 import { WorkersAiGateway } from "../infrastructure/workersAiGateway";
@@ -30,10 +30,11 @@ export function storeFor(db: D1Database): MailboxStorePort {
 }
 
 /** Pasa el correo al formato del contrato (snake_case). */
-const toDto = (e: MailboxEmail) => ({
+const toDto = (e: MailboxEmail & Partial<AiOrigin>) => ({
   id: e.id, recipient: e.recipient, from_address: e.fromAddress, from_name: e.fromName, reply_to: e.replyTo, subject: e.subject,
   body_sanitized: e.bodySanitized, received_at: e.receivedAt, folder: e.folder, risk_level: e.riskLevel, risk_score: e.riskScore,
   indicators: e.indicators, legal_basis: e.legalBasis, xai_explanation: e.xaiExplanation, review_status: e.reviewStatus,
+  ai_used: e.aiUsed ?? false, ai_model: e.aiModel ?? null, // origen de la explicación (transparencia de la IA)
 });
 
 
@@ -76,7 +77,8 @@ mailboxRoutes.get("/", requireRole("ANALYST") as never, async (c) => {
   const view = View.safeParse(c.req.query("folder") ?? undefined);
   if (!view.success) return c.json({ error: "Carpeta inválida." }, 400);
   const r = await listMailbox(view.data, storeFor(c.env.DB));
-  return c.json({ ...r, emails: r.emails.map(toDto) });
+  const origins = await aiOriginByEmail(c.env.DB, r.emails.map((e) => e.id));
+  return c.json({ ...r, emails: attachAiOrigin(r.emails, origins).map(toDto) });
 });
 
 mailboxRoutes.get("/scenarios", requireRole("ANALYST") as never, (c) =>

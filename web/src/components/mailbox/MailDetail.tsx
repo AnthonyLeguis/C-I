@@ -80,7 +80,7 @@ export function MailDetail({ email, role, onReview, onAction }: { email: EmailDt
 
           {email.xai_explanation && (
             <section className="rounded-card border border-line border-l-4 border-l-ai bg-surface-2/70 p-4">
-              <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold text-ink">Explicación del dictamen</h3><AiBadge aiUsed={false} /></div>
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold text-ink">Explicación del dictamen</h3><AiBadge aiUsed={email.ai_used ?? false} model={email.ai_model} /></div>
               <p className="text-sm leading-relaxed text-ink">{email.xai_explanation}</p>
             </section>
           )}

@@ -31,7 +31,7 @@ export function findingsMarkdown(email: EmailDto, action: string): string {
     out.push("", "## Fundamento legal", "");
     for (const l of email.legal_basis) out.push(`- **${l.norma}** (${l.referencia}): ${l.relacion}`);
   }
-  if (email.xai_explanation) out.push("", "## Explicación del dictamen", "", email.xai_explanation);
+  if (email.xai_explanation) out.push("", "## Explicación del dictamen", "", `_Origen: ${email.ai_used ? `generada por IA (${email.ai_model ?? "modelo no informado"})` : "análisis determinista por reglas"}._`, "", email.xai_explanation);
   out.push("", "## Acción recomendada", "", action, "");
   out.push("---", `_Generado por C&I el ${new Date().toLocaleString("es-VE")}. Datos personales protegidos. Orientativo; no constituye asesoría jurídica._`, "");
   return out.join("\n");

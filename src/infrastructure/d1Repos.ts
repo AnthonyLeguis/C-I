@@ -2,7 +2,7 @@
 // C&I.md §5.1: acceso a D1 (emails y audit_events).
 // AuditRepository implementa AuditRepositoryPort con hash SHA-256 encadenado.
 
-import type { Folder, ReviewStatus, RiskLevel } from "../domain/types";
+import type { AiOrigin, Folder, ReviewStatus, RiskLevel } from "../domain/types";
 import type { AuditEventInput, AuditRepositoryPort } from "../domain/ports";
 import { sha256 } from "./hash";
 
@@ -308,3 +308,21 @@ export class AuditRepository implements AuditRepositoryPort {
 
 /** Instancia singleton de EmailRepository (stateless). */
 export const emailRepository = new EmailRepository();
+
+/**
+ * Origen de la explicación de cada correo (IA o reglas), leído del análisis MAIL_ANALYZER de la bitácora.
+ * Consulta por lotes para no superar el límite de parámetros de D1.
+ */
+export async function aiOriginByEmail(db: D1Database, ids: string[]): Promise<Map<string, AiOrigin>> {
+  const out = new Map<string, AiOrigin>();
+  for (let i = 0; i < ids.length; i += 90) {
+    const chunk = ids.slice(i, i + 90);
+    if (chunk.length === 0) continue;
+    const r = await db
+      .prepare(`SELECT email_id, ai_used, ai_model FROM audit_events WHERE module = 'MAIL_ANALYZER' AND email_id IN (${chunk.map(() => "?").join(", ")}) ORDER BY created_at ASC`)
+      .bind(...chunk)
+      .all<{ email_id: string; ai_used: number; ai_model: string | null }>();
+    for (const row of r.results ?? []) out.set(row.email_id, { aiUsed: row.ai_used === 1, aiModel: row.ai_model });
+  }
+  return out;
+}
