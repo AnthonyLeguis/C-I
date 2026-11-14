@@ -1,9 +1,13 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/logo-ci.jpg" />
+    <script>
+      // Aplica el tema guardado antes de pintar (evita el destello claro→oscuro).
+      try { if (localStorage.getItem("ci-theme") === "dark") document.documentElement.dataset.theme = "dark"; } catch (e) {}
+    </script>
     <title>C&amp;I · Anticipamos el riesgo</title>
   </head>
   <body>

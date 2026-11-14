@@ -1,32 +1,218 @@
+/* C&I · Sistema de tema (PR X1 · Anthony) — PLAN_UX.md §2.1 y §3.1
+   Paleta basada en Dashboard_RC (contrastes validados) + azul marino y cian del logo.
+
+   Arquitectura: cada utilidad de Tailwind (`bg-surface`, `text-ink`, `bg-critical-soft`…) apunta a una
+   variable cruda (`--surface`, `--critical`…) que se redefine por tema. El tema cambia con
+   <html data-theme="dark"> sin tocar el marcado de ningún componente. */
+
+@import "@fontsource-variable/inter/wght.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
 @import "tailwindcss";
 
-/* Tokens oficiales de C&I (PLAN_UX.md §2). Alejandro (PR X1) agrega fuentes locales y el resto del tema. */
-@theme {
-  --color-primary: #0b2545;
-  --color-primary-accent: #134074;
-  --color-secondary: #00a8e8;
-  --color-bg: #f4f6f9;
-  --color-surface: #ffffff;
-  --color-console: #0d1b2a;
-  --color-text: #1b263b;
-  --color-text-muted: #5c6b73;
-  --color-border: #dde3ea;
+/* Habilita la variante `dark:` de Tailwind según el atributo data-theme. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-  --color-safe: #1e8449;
-  --color-safe-bg: #eafaf1;
-  --color-low: #1f618d;
-  --color-low-bg: #ebf5fb;
-  --color-high: #b7950b;
-  --color-high-bg: #fef9e7;
-  --color-critical: #922b21;
-  --color-critical-bg: #fdedec;
+@theme inline {
+  /* Superficies */
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-console: var(--console);
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* Texto */
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-muted: var(--ink-muted);
+
+  /* Marca y logo */
+  --color-brand: var(--brand);
+  --color-on-brand: var(--on-brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-ink: var(--sidebar-ink);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-ai: var(--ai);
+  --color-ai-soft: var(--ai-soft);
+
+  /* Niveles de alerta (PLAN_UX §3.1) — texto/borde y fondo suave */
+  --color-safe: var(--safe);
+  --color-safe-soft: var(--safe-soft);
+  --color-low: var(--low);
+  --color-low-soft: var(--low-soft);
+  --color-high: var(--high);
+  --color-high-soft: var(--high-soft);
+  --color-critical: var(--critical);
+  --color-critical-soft: var(--critical-soft);
+  --color-escalated: var(--escalated);
+  --color-escalated-soft: var(--escalated-soft);
+
+  /* Series para gráficos */
+  --color-series-1: var(--series-1);
+  --color-series-2: var(--series-2);
+  --color-series-3: var(--series-3);
+  --color-series-4: var(--series-4);
+  --color-series-5: var(--series-5);
+  --color-series-6: var(--series-6);
+  --color-series-7: var(--series-7);
+  --color-series-8: var(--series-8);
+  --color-grid: var(--grid);
+
+  /* Tipografía (fuentes locales: la demo no depende de un CDN) */
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", monospace;
+
+  /* Radios (PLAN_UX §2.2) */
+  --radius-card: 10px;
+  --radius-control: 6px;
+  --radius-badge: 4px;
+
+  /* Sombras */
+  --shadow-card: var(--shadow-card-raw);
+}
+
+/* ------------------------------- CLARO (por defecto) ------------------------------- */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --page: #e7f0ea;
+  --surface: #f4faf6;
+  --surface-2: #eaf3ed;
+  --line: #d6e6db;
+  --line-strong: #c0d5c7;
+  --console: #0f172a;
+
+  --ink: #0f172a;
+  --ink-2: #334155;
+  --ink-muted: #64748b;
+
+  --brand: #008542;
+  --on-brand: #ffffff;
+  --brand-soft: #e6f7ee;
+  --sidebar: #0b2545;
+  --sidebar-ink: #e2e8f0;
+  --sidebar-active: #134074;
+  --ai: #0077a8; /* cian del logo oscurecido para texto sobre claro (contraste AA) */
+  --ai-soft: #e0f4fc;
+
+  --safe: #0a8f34;
+  --safe-soft: #e6f7ee;
+  --low: #2a78d6;
+  --low-soft: #ebf3fd;
+  --high: #b7791f;
+  --high-soft: #fdf3e1;
+  --critical: #dc2626;
+  --critical-soft: #fdecec;
+  --escalated: #c2410c;
+  --escalated-soft: #fdeee6;
+
+  --series-1: #2a78d6;
+  --series-2: #1baf7a;
+  --series-3: #eda100;
+  --series-4: #008300;
+  --series-5: #4a3aa7;
+  --series-6: #e34948;
+  --series-7: #e87ba4;
+  --series-8: #eb6834;
+  --grid: #e3efe7;
+
+  --shadow-card-raw: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+/* -------------------------------------- OSCURO -------------------------------------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --page: #020617;
+  --surface: #0f172a;
+  --surface-2: #16203a;
+  --line: #1e293b;
+  --line-strong: #334155;
+  --console: #020617;
+
+  --ink: #f1f5f9;
+  --ink-2: #cbd5e1;
+  --ink-muted: #94a3b8;
+
+  --brand: #00b050;
+  --on-brand: #04140a;
+  --brand-soft: rgba(0, 176, 80, 0.16);
+  --sidebar: #0b2545;
+  --sidebar-ink: #e2e8f0;
+  --sidebar-active: #134074;
+  --ai: #00a8e8;
+  --ai-soft: rgba(0, 168, 232, 0.16);
+
+  --safe: #0ca30c;
+  --safe-soft: rgba(12, 163, 12, 0.16);
+  --low: #3987e5;
+  --low-soft: rgba(57, 135, 229, 0.16);
+  --high: #fab219;
+  --high-soft: rgba(250, 178, 25, 0.14);
+  --critical: #e05252;
+  --critical-soft: rgba(208, 59, 59, 0.18);
+  --escalated: #ec835a;
+  --escalated-soft: rgba(236, 131, 90, 0.16);
+
+  --series-1: #3987e5;
+  --series-2: #199e70;
+  --series-3: #c98500;
+  --series-4: #008300;
+  --series-5: #9085e9;
+  --series-6: #e66767;
+  --series-7: #d55181;
+  --series-8: #d95926;
+  --grid: #1e293b;
+
+  --shadow-card-raw: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+html {
+  background: var(--page);
 }
 
 body {
-  background: var(--color-bg);
-  color: var(--color-text);
+  background: var(--page);
+  color: var(--ink);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Números alineados en KPI y tablas */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Transición suave al cambiar de tema: la clase la pone useTheme ~450 ms y luego la quita,
+   para no dejar transiciones permanentes que generen lag. */
+:root.theme-animating,
+:root.theme-animating *,
+:root.theme-animating *::before,
+:root.theme-animating *::after {
+  transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, fill 0.4s ease, stroke 0.4s ease !important;
+}
+
+/* Indicador pulsante (IA en línea, pendientes de revisión) */
+@keyframes ci-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.animate-ci-pulse {
+  animation: ci-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root.theme-animating,
+  :root.theme-animating * {
+    transition: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
