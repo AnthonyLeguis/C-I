@@ -25,6 +25,14 @@ export function MailboxPage() {
     } catch { toast.notify("error", "Tu rol no permite esta acción o hubo un error"); }
   };
 
+  const action = async (k: "approve" | "escalate" | "block") => {
+    if (!m.selected) return;
+    try {
+      const r = await m.act(k, m.selected.id);
+      toast.notify(k === "block" ? "error" : "success", `${r.label} · registrado en bitácora`, `hash ${r.hash.slice(0, 12)}…`);
+    } catch (e: unknown) { toast.notify("error", e instanceof Error ? e.message : "No se pudo completar la acción"); }
+  };
+
   return (
     <div className="mx-auto max-w-7xl space-y-4">
       <MailboxToolbar view={m.view} onView={m.setView} data={m.data} scenarios={m.scenarios} busy={m.busy} onSimulate={(id) => void simulate(id)} />
@@ -34,7 +42,7 @@ export function MailboxPage() {
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
           <MailList emails={m.data.emails} selectedId={m.selectedId} freshId={m.freshId} onSelect={m.setSelectedId} />
           {m.selected && user
-            ? <MailDetail email={m.selected} role={user.role} onReview={(d) => void review(d)} />
+            ? <MailDetail email={m.selected} role={user.role} onReview={(d) => void review(d)} onAction={(k) => void action(k)} />
             : <EmptyState title="Selecciona un correo" text="Elige un correo de la lista para ver su dictamen." />}
         </div>
       )}

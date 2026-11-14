@@ -1,5 +1,5 @@
 // Detalle del correo: encabezados, medidor, contenido neutralizado, hallazgos, fundamento legal y decisión (PR G5).
-import { Eye, ScanSearch, ShieldCheck, Undo2 } from "lucide-react";
+import { ArrowUpRight, Ban, CheckCircle2, Eye, ScanSearch, ShieldCheck, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { navigate } from "../../app/router";
 import type { EmailDto, Role } from "../../types/contracts";
@@ -14,11 +14,13 @@ const ACTION = {
 } as const;
 const URL_RE = /(https?:\/\/[^\s<>"')\]]+)/g;
 
-export function MailDetail({ email, role, onReview }: { email: EmailDto; role: Role; onReview: (d: "CONFIRM" | "RESTORE") => void }) {
+export function MailDetail({ email, role, onReview, onAction }: { email: EmailDto; role: Role; onReview: (d: "CONFIRM" | "RESTORE") => void; onAction: (k: "approve" | "escalate" | "block") => void }) {
   const [reveal, setReveal] = useState(false);
   const isQuarantine = email.folder === "QUARANTINE";
   const blurred = isQuarantine && !reveal;
-  const canDecide = role !== "ANALYST" && (email.review_status === "PENDING" || isQuarantine);
+  const isCiso = role !== "ANALYST";
+  const canDecide = isCiso && (email.review_status === "PENDING" || email.review_status === "ESCALATED" || isQuarantine);
+  const risky = email.risk_level === "HIGH" || email.risk_level === "CRITICAL";
   const findings = email.indicators.filter((i) => (i.weight ?? 1) > 0);
   const trust = email.indicators.filter((i) => (i.weight ?? 1) < 0);
 
@@ -99,6 +101,11 @@ export function MailDetail({ email, role, onReview }: { email: EmailDto; role: R
         <Button variant="navy" icon={<ScanSearch size={16} />} onClick={() => navigate("analizar")}>Abrir en Analizador</Button>
         {canDecide && <Button variant="danger" icon={<ShieldCheck size={16} />} onClick={() => onReview("CONFIRM")}>Confirmar amenaza</Button>}
         {canDecide && <Button variant="success" icon={<Undo2 size={16} />} onClick={() => onReview("RESTORE")}>Restaurar a bandeja</Button>}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="success" icon={<CheckCircle2 size={16} />} onClick={() => onAction("approve")} disabled={email.folder === "INBOX" && email.review_status !== "PENDING"}>Aprobar / Marcar seguro</Button>
+        <Button variant="warning" icon={<ArrowUpRight size={16} />} onClick={() => onAction("escalate")} disabled={email.review_status === "ESCALATED"}>Escalar a CISO</Button>
+        {isCiso && <Button variant="danger" icon={<Ban size={16} />} onClick={() => onAction("block")} disabled={!risky}>Bloquear dominio</Button>}
       </div>
     </Card>
   );

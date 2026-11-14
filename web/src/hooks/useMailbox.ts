@@ -41,6 +41,20 @@ export function useMailbox() {
     return r;
   }, [load, view]);
 
+  /** G7: acciones en 1 clic. */
+  const act = useCallback(async (kind: "approve" | "escalate" | "block", id: string) => {
+    if (kind === "block") {
+      const e = data?.emails.find((x) => x.id === id);
+      const domain = e?.from_address.split("@")[1] ?? "";
+      const r = await api.blockDomain(domain, id);
+      await load(view);
+      return { label: `Dominio ${r.domain} bloqueado`, hash: r.audit_hash };
+    }
+    const r = kind === "approve" ? await api.approve(id) : await api.escalate(id);
+    await load(view);
+    return { label: kind === "approve" ? "Correo marcado como seguro" : "Caso escalado a CISO", hash: r.audit_hash };
+  }, [data, load, view]);
+
   const selected = data?.emails.find((e) => e.id === selectedId) ?? null;
-  return { view, setView, data, error, reload: () => load(view), selected, selectedId, setSelectedId, freshId, scenarios, simulate, review, busy };
+  return { view, setView, data, error, reload: () => load(view), selected, selectedId, setSelectedId, freshId, scenarios, simulate, review, act, busy };
 }
