@@ -29,7 +29,7 @@ Con Docker (prueba completa en una máquina limpia):
 (se completa con los usuarios de demostración y el recorrido de la demo)
 
 ## Arquitectura Cloudflare usada
-Workers (API con Hono) · D1 (buzón, usuarios y bitácora) · Workers AI (GLM-4.7 Flash + Llama Guard 3) · Static Assets (frontend React + Tailwind).
+Workers (API con Hono) · D1 (buzón, usuarios y bitácora) · Workers AI (Llama 3.3 70B + Llama Guard 3) · Static Assets (frontend React + Tailwind).
 
 ## Uso de IA
 Ver la declaración completa en [`SPEC.md`](SPEC.md). Resumen: las reglas deciden, la IA explica; nunca se envían datos personales reales al modelo.

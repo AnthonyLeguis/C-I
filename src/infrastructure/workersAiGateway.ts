@@ -10,10 +10,12 @@ export interface AiRunner {
 }
 
 export const AI_MODELS = {
-  /** Explicaciones y asistente (recomendado por el evento, verificado el 12/11/2026). */
-  chat: "@cf/zai-org/glm-4.7-flash",
-  /** Respaldo de chat si el principal falla. */
-  chatFallback: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  /** Explicaciones y asistente: rápido (~0,9 s) y con buen español. Verificado el 13/11/2026.
+   *  Nota: GLM-4.7 Flash se descartó como principal porque es un modelo de razonamiento:
+   *  tarda ~7,6 s y con 400 tokens devuelve el contenido vacío (solo "reasoning"). */
+  chat: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  /** Respaldo de chat si el principal falla (~2,6 s). */
+  chatFallback: "@cf/meta/llama-4-scout-17b-16e-instruct",
   /** Clasificador de seguridad: detecta peticiones dañinas o manipulación. */
   guard: "@cf/meta/llama-guard-3-8b",
 } as const;

@@ -148,7 +148,7 @@ Fuentes: web del evento, `/agente-spec`, `/en-vivo`, `/remoto` y _Manual de desp
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | API               | **Cloudflare Workers + Hono** (TypeScript estricto)                                                                                                                                            | Recomendado por el evento, gratis, despliegue en segundos                                        |
 | Base de datos     | **Cloudflare D1** (SQLite)                                                                                                                                                                     | Buzón, usuarios y bitácora                                                                       |
-| IA                | **Workers AI**: `@cf/zai-org/glm-4.7-flash` (explicaciones y asistente) + `@cf/meta/llama-guard-3-8b` (peticiones ofensivas o inyección). Respaldo: `@cf/meta/llama-3.3-70b-instruct-fp8-fast` | Verificados el 12/11. ⚠️ `llama-3.1-8b-instruct` **está retirado**, aunque el manual lo mencione |
+| IA                | **Workers AI**: `@cf/meta/llama-3.3-70b-instruct-fp8-fast` (explicaciones y asistente; respaldo `@cf/meta/llama-4-scout-17b-16e-instruct`) + `@cf/meta/llama-guard-3-8b` (peticiones ofensivas o inyección). Respaldo: `@cf/meta/llama-3.3-70b-instruct-fp8-fast` | Verificados el 12/11. ⚠️ `llama-3.1-8b-instruct` **está retirado**, aunque el manual lo mencione |
 | Frontend          | **Vite + React + TypeScript + Tailwind + Lucide**, servido como _Static Assets_ del Worker                                                                                                     | Una sola URL, sin CORS                                                                           |
 | Seguridad         | Contraseñas con **PBKDF2 (WebCrypto)**, sesión firmada con **HMAC** en cookie `HttpOnly`, roles en cada endpoint                                                                               | Sin librerías pesadas                                                                            |
 | Respaldo          | Motor determinista (reglas) si la IA falla o se agota la cuota                                                                                                                                 | La demo nunca se cae                                                                             |
@@ -329,7 +329,7 @@ Jerarquía de roles: `ADMIN` ⊃ `SUPERVISOR` ⊃ `ANALYST`.
   "recommendation": "No abrir enlaces ni adjuntos. Mantener en cuarentena y reportar al área de seguridad.",
   "pii_masked": [],
   "ai_used": true,
-  "ai_model": "@cf/zai-org/glm-4.7-flash",
+  "ai_model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
   "human_review_required": true
 }
 ```
@@ -424,7 +424,7 @@ git add -A && git commit -m "feat(<modulo>): <qué hice>" && git push
 **Archivos:** todo lo compartido (`src/index.ts`, `domain/types.ts`, `domain/ports.ts`, `web/src/types/contracts.ts`, `web/src/services/apiClient.ts`, `package.json`, `wrangler.toml`, CI/CD, Docker), `piiSanitizer.ts`, `workersAiGateway.ts`, `ethicsGuard.ts`, `assistant.ts`, `assistantRoutes.ts`, `components/assistant/*`, `pages/Assistant.tsx`, `SPEC.md`.
 
 - **F0:** esqueleto, contratos, **rutas mock** con el JSON exacto, CI/CD, entornos QA y producción.
-- **Guardián ético:** PII → patrones de inyección → Llama Guard 3 (peticiones ofensivas) → GLM-4.7 Flash con el system prompt "C&I… defensa pura, cero invención" (idea de Williams).
+- **Guardián ético:** PII → patrones de inyección → Llama Guard 3 (peticiones ofensivas) → Llama 3.3 70B con el system prompt "C&I… defensa pura, cero invención" (idea de Williams).
 - Integración en cada checkpoint, entregas en `/remoto` y `SPEC.md`.
 
 ---
@@ -493,7 +493,7 @@ El correo corporativo es la principal puerta de entrada de los ataques contra la
 
 ## 6. Arquitectura
 
-Frontend: Vite + React + Tailwind (Static Assets). Backend: Cloudflare Workers + Hono. Datos: D1. IA: Workers AI (GLM-4.7 Flash, Llama Guard 3). Seguridad: PBKDF2, sesión HMAC, RBAC, hash SHA-256 encadenado. Servicios Cloudflare: Workers, D1, Workers AI, Static Assets.
+Frontend: Vite + React + Tailwind (Static Assets). Backend: Cloudflare Workers + Hono. Datos: D1. IA: Workers AI (Llama 3.3 70B, Llama Guard 3). Seguridad: PBKDF2, sesión HMAC, RBAC, hash SHA-256 encadenado. Servicios Cloudflare: Workers, D1, Workers AI, Static Assets.
 
 ## 7. Modelo de datos
 
@@ -504,7 +504,7 @@ Tablas `users`, `emails`, `audit_events` (ver `migrations/`).
 | Pregunta                       | Respuesta                                                                                                                                                             |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ¿Usas IA en tu solución?       | Sí                                                                                                                                                                    |
-| ¿Qué modelo y por qué?         | GLM-4.7 Flash (explicaciones y asistente) y Llama Guard 3 (detección de peticiones dañinas), en Workers AI: recomendados por el evento y sin enviar datos a terceros. |
+| ¿Qué modelo y por qué?         | Llama 3.3 70B (explicaciones y asistente) y Llama Guard 3 (detección de peticiones dañinas), en Workers AI: recomendados por el evento y sin enviar datos a terceros. |
 | ¿Qué problema resuelve?        | Clasifica tácticas de ingeniería social en español y explica las decisiones en lenguaje claro.                                                                        |
 | ¿Qué datos procesa?            | Solo texto anonimizado y sintético. Nunca datos personales reales.                                                                                                    |
 | ¿Cómo evitas sesgos?           | Las reglas verificables pesan 70 %; la IA, 30 %. Probamos con correos de distintas entidades y estilos.                                                               |
@@ -555,7 +555,7 @@ Sistema inteligente contra el phishing en el correo corporativo de la banca vene
 
 ## Arquitectura Cloudflare usada
 
-Workers (API Hono) · D1 (buzón, usuarios, bitácora) · Workers AI (GLM-4.7 Flash + Llama Guard 3) · Static Assets (React)
+Workers (API Hono) · D1 (buzón, usuarios, bitácora) · Workers AI (Llama 3.3 70B + Llama Guard 3) · Static Assets (React)
 
 ## Uso de IA
 
@@ -1045,7 +1045,7 @@ const withTimeout = <T>(p: Promise<T>) =>
   ]);
 
 export class WorkersAiGateway implements AiGatewayPort {
-  readonly modelName = "@cf/zai-org/glm-4.7-flash";
+  readonly modelName = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
   private readonly guardModel = "@cf/meta/llama-guard-3-8b";
   constructor(private readonly ai: Ai) {}
 
