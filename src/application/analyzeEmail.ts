@@ -20,6 +20,7 @@ import { getLegalBasis } from "../domain/legalCatalog";
 import { analyzeHeuristics } from "../infrastructure/emailHeuristics";
 import type { ParsedEmail } from "../infrastructure/emailParser";
 import { sanitizeMany, sanitizePii } from "../infrastructure/piiSanitizer";
+import { evaluateGuardRules } from "../infrastructure/ethicsGuard";
 
 export const MAIL_ANALYSIS_SYSTEM_PROMPT = `Eres C&I, analista de ciberseguridad para la banca venezolana.
 Estima de 0 a 100 la probabilidad de que el correo sea phishing o ingeniería social.
@@ -123,10 +124,15 @@ export async function analyzeEmail(
 
   // 2. Reglas deterministas sobre el correo local (sin enviar nada afuera).
   const heuristics = analyzeHeuristics(email);
-  const rulesScore = heuristics.score;
+  // Inyección indirecta: el correo trae instrucciones dirigidas a un sistema de IA para manipular el dictamen.
+  const injection = evaluateGuardRules(`${subjectSanitized}\n${bodySanitized}`).reasons.includes("PROMPT_INJECTION");
+  const injectionIndicator = { category: "INGENIERIA_SOCIAL" as const, text: "El correo contiene instrucciones dirigidas a un sistema de IA (intento de manipular el análisis)", weight: 25 };
+  const rulesScore = Math.min(100, heuristics.score + (injection ? injectionIndicator.weight : 0));
   // La señal de confianza (peso negativo) explica el score, pero no es un "hallazgo"
-  // que deba mostrarse como amenaza ni contarse en el dashboard.
-  const findings = heuristics.indicators.filter((indicator) => indicator.weight > 0);
+  // que deba mostrarse como amenaza ni contarse en el dashboard. Los textos se anonimizan antes de guardarse
+  // (p. ej. un adjunto llamado con una cédula), porque la bitácora es inmutable y no se puede corregir después.
+  const findings = [...heuristics.indicators.filter((indicator) => indicator.weight > 0), ...(injection ? [injectionIndicator] : [])]
+    .map((indicator) => ({ ...indicator, text: sanitizePii(indicator.text).sanitized }));
 
   // 3. IA con el texto ya anonimizado (solo el 30 % del puntaje).
   const aiPrompt = buildAiUserPrompt({
@@ -141,17 +147,21 @@ export async function analyzeEmail(
   });
   const aiAssessment = await assessWithAi(aiPrompt, deps);
 
-  // 4. Fusión y decisión.
-  const finalScore = fuseScores(rulesScore, aiAssessment?.score ?? null);
+  // 4. Fusión y decisión. La IA aporta el 30 %, pero solo puede SUBIR el riesgo: nunca bajarlo por debajo
+  // de lo que prueban las reglas (un correo malicioso no puede «convencer» a la IA de sacarlo de cuarentena).
+  const finalScore = Math.max(rulesScore, fuseScores(rulesScore, aiAssessment?.score ?? null));
   const riskLevel = scoreToLevel(finalScore);
   const folder = levelToFolder(riskLevel);
   const legalBasis = getLegalBasis(heuristics.legalIndicators);
   const aiUsed = aiAssessment !== null;
   const aiModel = aiAssessment?.model ?? null;
   const deterministicExplanation = buildDeterministicExplanation(findings, rulesScore);
+  // Si el correo intenta manipular a la IA, o la IA contradice fuertemente a las reglas, la explicación que
+  // ve la persona es la determinista (verificable), no el texto del modelo.
+  const aiTrusted = aiAssessment !== null && !injection && aiAssessment.score >= rulesScore - 30;
   const xaiExplanation =
-    aiAssessment?.explanation !== undefined && aiAssessment.explanation.trim() !== ""
-      ? aiAssessment.explanation.trim().slice(0, 700)
+    aiTrusted && aiAssessment?.explanation !== undefined && aiAssessment.explanation.trim() !== ""
+      ? sanitizePii(aiAssessment.explanation.trim().slice(0, 700)).sanitized
       : deterministicExplanation;
   const reviewStatus: ReviewStatus = riskLevel === "CRITICAL" ? "PENDING" : "N/A";
 

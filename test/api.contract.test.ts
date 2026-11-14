@@ -3,7 +3,7 @@ import app from "../src/index";
 import { signSession, type SessionUser } from "../src/infrastructure/auth";
 
 const SECRET = "ci-test-key-321";
-const env = { SESSION_SECRET: SECRET } as never;
+const env = { SESSION_SECRET: SECRET, DEMO_MODE: "true" } as never;
 
 const ANALYST: SessionUser = {
   id: "00000000-0000-4000-8000-000000000001",

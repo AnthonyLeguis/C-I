@@ -14,6 +14,7 @@ import type { AppEnv } from "../src/env";
 
 const testEnv = {
   SESSION_SECRET: "ci-test-key-321",
+  DEMO_MODE: "true",
 } as never;
 
 const jsonPost = (path: string, body: unknown, cookie?: string) => {

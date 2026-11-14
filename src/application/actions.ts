@@ -1,6 +1,7 @@
 // [CAPA 2 — APLICACIÓN] Acciones del prototipo (PR G7): marcar seguro, escalar a CISO, bloquear dominios
 // y exportar la bitácora. Cada acción queda registrada en la bitácora con hash (G2).
 import type { AuditRepositoryPort } from "../domain/ports";
+import type { Folder, ReviewStatus } from "../domain/types";
 import type { MailboxStorePort } from "./mailbox";
 
 export interface BlockedDomain { domain: string; reason: string; blocked_by: string; email_id: string | null; created_at: string }
@@ -17,6 +18,15 @@ interface DomainDeps { audit: AuditRepositoryPort; domains: DomainStorePort }
 
 const log = (deps: { audit: AuditRepositoryPort }, emailId: string | null, actor: string, actionTaken: string, note: string | null = null) =>
   deps.audit.append({ module: "REVIEW", emailId, actor, riskLevel: null, riskScore: null, actionTaken, indicators: [], legalBasis: [], piiDetected: [], xaiExplanation: note, aiUsed: false, aiModel: null });
+
+/**
+ * Liberar un correo en cuarentena o en revisión (pendiente o escalado) es una decisión del CISO o del Master;
+ * el Analista solo puede marcar como seguros los correos de Bandeja o Spam que no esperan revisión.
+ */
+export function canApprove(email: { folder: Folder; reviewStatus: ReviewStatus }, role: "ANALYST" | "SUPERVISOR" | "ADMIN"): boolean {
+  if (role !== "ANALYST") return true;
+  return email.folder !== "QUARANTINE" && email.reviewStatus !== "PENDING" && email.reviewStatus !== "ESCALATED";
+}
 
 /** Aprobar / Marcar seguro: vuelve a la bandeja como restaurado. */
 export async function approveEmail(id: string, actor: string, deps: Deps) {
@@ -61,7 +71,9 @@ export async function unblockDomain(raw: string, actor: string, deps: DomainDeps
 /** CSV de la bitácora (separador ; para Excel en español, con comillas escapadas). */
 export function toCsv(rows: Record<string, unknown>[], columns: string[]): string {
   const cell = (v: unknown) => {
-    const s = v === null || v === undefined ? "" : typeof v === "string" ? v : JSON.stringify(v);
+    let s = v === null || v === undefined ? "" : typeof v === "string" ? v : JSON.stringify(v);
+    // Inyección de fórmulas: una celda que empieza con = + - @ (o tab/retorno) se neutraliza con un apóstrofo.
+    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
     return `"${s.replaceAll('"', '""')}"`;
   };
   return "\uFEFF" + [columns.join(";"), ...rows.map((r) => columns.map((c) => cell(r[c])).join(";"))].join("\r\n");

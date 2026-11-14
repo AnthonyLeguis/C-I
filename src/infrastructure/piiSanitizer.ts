@@ -31,7 +31,7 @@ const RULES: readonly PiiRule[] = [
   {
     type: "CORREO_PERSONAL",
     // Solo correos de proveedores gratuitos: los corporativos (remitentes) se analizan como indicadores.
-    pattern: /\b[\w.+-]+@(?:gmail|hotmail|outlook|yahoo|live|icloud|proton(?:mail)?)\.[a-z.]{2,}\b/gi,
+    pattern: /(?<![\w.+-])[\w.+-]{1,64}@(?:gmail|hotmail|outlook|yahoo|live|icloud|proton(?:mail)?)\.[a-z.]{2,24}\b/gi, // longitudes acotadas: sin retroceso cuadrático (ReDoS)
     mask: "[CORREO_PERSONAL_PROTEGIDO]",
   },
 ];
