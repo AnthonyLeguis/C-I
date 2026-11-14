@@ -174,8 +174,9 @@ export async function verifySession(
     const jsonStr = new TextDecoder().decode(payloadBytes);
     const parsed = JSON.parse(jsonStr) as SessionPayload;
 
+    // Toda sesión debe expirar: un token sin `exp` numérico se rechaza.
     const nowSeconds = Math.floor(Date.now() / 1000);
-    if (typeof parsed.exp === "number" && parsed.exp < nowSeconds) {
+    if (typeof parsed.exp !== "number" || parsed.exp < nowSeconds || !parsed.user?.role) {
       return null;
     }
 
@@ -250,7 +251,7 @@ export async function authenticateUser<E extends AppEnv = AppEnv>(
   const normUser = usernameInput.trim().toLowerCase();
   const env = c.env as AppEnv["Bindings"] | undefined;
 
-  // 1. Intentar consulta en base de datos D1 si está enlazada
+  // 1. Con D1 enlazado, la tabla users es la única fuente de verdad (falla cerrado: sin respaldo en memoria).
   if (env?.DB) {
     try {
       const row = await env.DB.prepare(
@@ -275,12 +276,16 @@ export async function authenticateUser<E extends AppEnv = AppEnv>(
         }
         return null;
       }
+      // Usuario inexistente: se calcula un hash igual para no revelar por tiempo de respuesta qué usuarios existen.
+      await verifyPassword(passwordInput, TIMING_DUMMY_HASH, TIMING_DUMMY_SALT);
+      return null;
     } catch (e) {
       console.error("Error consultando tabla users en D1:", e);
+      return null;
     }
   }
 
-  // 2. Respaldo en memoria (demo / pruebas sin D1 instanciado)
+  // 2. Sin D1 (pruebas unitarias): catálogo demo en memoria
   const demo = DEMO_USERS[normUser];
   if (demo) {
     const isValid = await verifyPassword(
@@ -295,6 +300,9 @@ export async function authenticateUser<E extends AppEnv = AppEnv>(
 
   return null;
 }
+
+const TIMING_DUMMY_SALT = "00000000000000000000000000000000";
+const TIMING_DUMMY_HASH = "0".repeat(64);
 
 /**
  * Quick-login para los 3 usuarios del prototipo (solo demo, sin contraseña).

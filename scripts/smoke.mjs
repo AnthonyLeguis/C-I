@@ -22,7 +22,8 @@ if (!page.ok || !(await page.text()).includes('id="root"')) fail("el frontend no
 const login = await call("POST", "/auth/login", { username: process.env.SMOKE_USER ?? "svalenzuela", password: process.env.SMOKE_PASSWORD ?? "Demo-2026!" });
 if (login.status !== 200) fail("login de demo falló");
 
-const bad = await call("POST", "/mail/analyze", {
+// ?persist=false: la prueba de humo no deja correos de prueba en el buzón de producción.
+const bad = await call("POST", "/mail/analyze?persist=false", {
   from_address: "notificaciones@sudeban-gob.com", from_name: "SUDEBAN", reply_to: "x@gmail.com",
   subject: "URGENTE credenciales", body: "Ingrese su clave en http://sudeban-gob.com/validar. Cédula V-00.000.001",
   auth_results: "spf=fail; dkim=none; dmarc=fail", attachments: ["Resolucion.pdf.exe"],
@@ -31,13 +32,13 @@ has(bad.json, ["event_id", "risk_level", "risk_score", "action_taken", "indicato
 if (bad.json.action_taken !== "QUARANTINE") fail("phishing obvio no fue a cuarentena");
 if (JSON.stringify(bad.json).includes("00.000.001")) fail("¡FUGA DE PII!");
 
-const good = await call("POST", "/mail/analyze", {
+const good = await call("POST", "/mail/analyze?persist=false", {
   from_address: "rrhh@banco-demo.com.ve", from_name: "RRHH", subject: "Recibo de pago", body: "Su recibo está disponible en la intranet.",
   auth_results: "spf=pass; dkim=pass; dmarc=pass", attachments: [],
 });
 if (good.json.action_taken !== "INBOX") fail("falso positivo en correo legítimo");
 
-if ((await call("POST", "/mail/analyze", {})).status !== 400) fail("un correo inválido no devuelve 400");
+if ((await call("POST", "/mail/analyze?persist=false", {})).status !== 400) fail("un correo inválido no devuelve 400");
 
 const mb = await call("GET", "/mailbox?folder=QUARANTINE");
 has(mb.json, ["folder", "counts", "emails"], "/mailbox");

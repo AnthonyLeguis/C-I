@@ -2,22 +2,33 @@ name: deploy
 on:
   push: { branches: [qa, main] }
 concurrency: deploy-${{ github.ref_name }}
+# Mínimo privilegio: el despliegue solo lee el código (el acceso a Cloudflare va por su propio token).
+permissions:
+  contents: read
 jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       ENV_NAME: ${{ github.ref_name == 'main' && 'production' || 'qa' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
+      # El token de Cloudflare NO está disponible en la instalación ni en las pruebas: solo en los pasos de wrangler.
       - run: npm ci && npm run check
       - run: npx wrangler d1 migrations apply DB --remote --env $ENV_NAME
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - run: npx wrangler deploy --env $ENV_NAME
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: Smoke contra la URL desplegada
+        env:
+          PROD_URL: ${{ vars.PROD_URL }}
+          QA_URL: ${{ vars.QA_URL }}
         run: |
-          if [ "$ENV_NAME" = "production" ]; then URL="${{ vars.PROD_URL }}"; else URL="${{ vars.QA_URL }}"; fi
+          if [ "$ENV_NAME" = "production" ]; then URL="$PROD_URL"; else URL="$QA_URL"; fi
           sleep 10
           SMOKE_URL="$URL" npm run smoke

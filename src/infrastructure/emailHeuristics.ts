@@ -281,6 +281,18 @@ export function analyzeHeuristics(email: HeuristicInput): HeuristicResult {
     }
   }
 
+  // 1b. Remitente: dominio con caracteres internacionales o punycode (ataque de homógrafos, p. ej. «sudebán»).
+  //     Antes estos dominios no se podían normalizar y se saltaban todas las verificaciones del remitente.
+  const rawSenderDomain = email.fromAddress.split("@").pop() ?? "";
+  if (/[^\x00-\x7F]/.test(rawSenderDomain) || /(^|\.)xn--/i.test(rawSenderDomain)) {
+    addIndicator(
+      "REMITENTE",
+      "El dominio del remitente usa caracteres internacionales o punycode: posible suplantación por letras parecidas (homógrafos)",
+      HEURISTIC_WEIGHTS.DOMAIN_IMITATION,
+      ["DOMINIO_SUPLANTADO", "SUPLANTACION_IDENTIDAD"],
+    );
+  }
+
   // 2. Remitente: nombre visible que no corresponde al dominio.
   const nameMismatch = describeNameMismatch(email, senderDomain, senderEntity);
   if (nameMismatch !== null) {
@@ -565,7 +577,8 @@ function assessLinks(urls: readonly string[], html: string): LinkAssessment {
   };
 }
 
-const ANCHOR_PATTERN = /<a\b[^>]*href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+// Longitudes acotadas para que un HTML malicioso (muchas <a sin cierre) no dispare un retroceso cuadrático (ReDoS).
+const ANCHOR_PATTERN = /<a\b[^>]{0,500}?href\s*=\s*["']([^"']{1,2048})["'][^>]{0,500}>([\s\S]{0,2000}?)<\/a>/gi;
 
 function findLinkMismatches(html: string): LinkMismatch[] {
   const result: LinkMismatch[] = [];

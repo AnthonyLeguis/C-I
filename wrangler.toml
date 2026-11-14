@@ -3,6 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2026-11-01"
 workers_dev = true
 
+# Perfiles de demostración (1 clic) y restablecimiento: solo porque es un MVP de demostración con datos sintéticos.
+[vars]
+DEMO_MODE = "true"
+
 [assets]
 directory = "./web/dist"
 not_found_handling = "single-page-application"
@@ -24,6 +28,7 @@ name = "c-i-qa"
 workers_dev = true
 ai = { binding = "AI" }
 assets = { directory = "./web/dist", not_found_handling = "single-page-application", run_worker_first = ["/api/*"] }
+vars = { DEMO_MODE = "true" }
 
 [[env.qa.d1_databases]]
 binding = "DB"
@@ -37,6 +42,7 @@ name = "c-i"
 workers_dev = true
 ai = { binding = "AI" }
 assets = { directory = "./web/dist", not_found_handling = "single-page-application", run_worker_first = ["/api/*"] }
+vars = { DEMO_MODE = "true" }
 
 [[env.production.d1_databases]]
 binding = "DB"
@@ -48,6 +54,7 @@ migrations_dir = "migrations"
 [env.offline]
 name = "c-i-offline"
 assets = { directory = "./web/dist", not_found_handling = "single-page-application", run_worker_first = ["/api/*"] }
+vars = { DEMO_MODE = "true" }
 
 [[env.offline.d1_databases]]
 binding = "DB"

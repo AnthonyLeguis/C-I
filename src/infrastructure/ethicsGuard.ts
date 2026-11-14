@@ -12,7 +12,9 @@ interface GuardRule {
 
 /** Normaliza para que las reglas no dependan de tildes ni mayúsculas. */
 export function normalize(text: string): string {
-  return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  // NFKC unifica variantes tipográficas (letras de ancho completo, ligaduras) y se eliminan caracteres invisibles
+  // (espacios de ancho cero) que se usan para esquivar las reglas.
+  return text.normalize("NFKC").replace(/[\u200B-\u200D\u2060\uFEFF\u00AD]/g, "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
 const RULES: readonly GuardRule[] = [
@@ -21,7 +23,7 @@ const RULES: readonly GuardRule[] = [
   { reason: "PROMPT_INJECTION", label: "Pide ignorar instrucciones (inglés)", pattern: /\b(ignore|disregard|forget)\b.{0,30}\b(instructions|rules|guidelines|above|previous)\b/ },
   { reason: "PROMPT_INJECTION", label: "Intenta cambiar el rol del asistente", pattern: /\b(actua como|finge (ser|que)|haz de cuenta|a partir de ahora eres|ahora eres|you are now|pretend to be)\b/ },
   { reason: "PROMPT_INJECTION", label: "Pide revelar instrucciones o datos internos", pattern: /\b(revela|muestrame|muestra|dime|imprime|repite|reveal|show me|print)\b.{0,30}\b(prompt|instrucciones (internas|del sistema)|system prompt|claves internas|contrasenas|credenciales|configuracion interna)\b/ },
-  { reason: "PROMPT_INJECTION", label: "Intenta activar un modo sin restricciones", pattern: /\b(modo (desarrollador|dios|sin restricciones|sin filtros)|developer mode|jailbreak|dan mode|\bdan\b)\b/ },
+  { reason: "PROMPT_INJECTION", label: "Intenta activar un modo sin restricciones", pattern: /\b(modo (desarrollador|dios|sin restricciones|sin filtros)|developer mode|jailbreak|dan mode|modo dan|do anything now)\b/ },
 
   // ── Peticiones ofensivas (C&I es solo defensa) ──
   { reason: "OFFENSIVE_REQUEST", label: "Pide evadir controles de seguridad", pattern: /\b(saltar|saltarme|salto|evadir|evado|evito|burlar|burlo|bypass(ear)?|desactivar|desactivo|deshabilitar|enganar|vulnerar|romper)\b.{0,40}\b(firewall|cortafuegos|antivirus|controles?|autenticacion|2fa|doble factor|seguridad|ids|ips|waf|filtros?|sudeban|auditoria)\b/ },

@@ -5,9 +5,13 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN echo 'SESSION_SECRET="docker-local"' > .dev.vars \
- && npm run build:web \
+# Construcción y datos de demostración. El secreto de sesión no se guarda en la imagen (ver scripts/docker-start.sh).
+RUN npm run build:web \
  && npx wrangler d1 migrations apply c-i-db-offline --local --env offline \
- && npx wrangler d1 execute c-i-db-offline --local --env offline --file=seed/seed_mailbox.sql
+ && npx wrangler d1 execute c-i-db-offline --local --env offline --file=seed/seed_mailbox.sql \
+ && rm -f .dev.vars \
+ && chown -R node:node /app
+# Sin privilegios de root en tiempo de ejecución.
+USER node
 EXPOSE 8787
-CMD ["npx", "wrangler", "dev", "--env", "offline", "--ip", "0.0.0.0", "--port", "8787"]
+CMD ["sh", "scripts/docker-start.sh"]
