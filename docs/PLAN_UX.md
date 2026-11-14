@@ -37,7 +37,7 @@
 | `--on-brand` | `#ffffff` | `#04140a` | Texto sobre `--brand` |
 | `--brand-soft` | `#e6f7ee` | `rgba(0,176,80,.16)` | Fondos suaves de marca |
 | `--sidebar` (logo) | `#0B2545` | `#0B2545` | Menú lateral (texto blanco) |
-| `--ai` (logo) | `#00A8E8` | `#00A8E8` | Badge "Generado por IA", análisis en curso |
+| `--ai` (logo) | `#0077a8` (cian del logo oscurecido para contraste AA) | `#00A8E8` | Badge "Generado por IA", análisis en curso |
 | `--console` | `#0f172a` | `#020617` | Bitácora / hashes |
 
 Gráficos (series categóricas): `#2a78d6 · #1baf7a · #eda100 · #008300 · #4a3aa7 · #e34948 · #e87ba4 · #eb6834` (claro) y `#3987e5 · #199e70 · #c98500 · #008300 · #9085e9 · #e66767 · #d55181 · #d95926` (oscuro).
