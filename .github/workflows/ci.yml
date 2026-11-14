@@ -1,0 +1,22 @@
+name: qa
+on:
+  push: { branches: ["feat/**"] }
+  pull_request: { branches: [qa, development, main] }
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run check
+      - name: Smoke local (Worker real, D1 local, sin IA)
+        run: |
+          echo 'SESSION_SECRET="ci-only-secret"' > .dev.vars
+          npx wrangler d1 migrations apply c-i-db-offline --local --env offline
+          npx wrangler dev --env offline --port 8787 > wrangler.log 2>&1 &
+          npx wait-on -t 90000 http://localhost:8787/api/v1/health
+          npm run smoke
+      - if: failure()
+        run: cat wrangler.log || true

@@ -1,0 +1,56 @@
+name = "c-i"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+[assets]
+directory = "./web/dist"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[ai]
+binding = "AI"
+
+# Local (wrangler dev) usa esta base
+[[d1_databases]]
+binding = "DB"
+database_name = "c-i-db"
+database_id = "f3057bb1-b414-41c9-890d-799ddc6ce491"
+migrations_dir = "migrations"
+
+# ── QA (rama qa) ──
+[env.qa]
+name = "c-i-qa"
+workers_dev = true
+ai = { binding = "AI" }
+assets = { directory = "./web/dist", not_found_handling = "single-page-application", run_worker_first = ["/api/*"] }
+
+[[env.qa.d1_databases]]
+binding = "DB"
+database_name = "c-i-db-qa"
+database_id = "e78c60f4-2923-45e9-8a4c-26880d6ceba6"
+migrations_dir = "migrations"
+
+# ── PRODUCCIÓN (rama main, la que ve el jurado) ──
+[env.production]
+name = "c-i"
+workers_dev = true
+ai = { binding = "AI" }
+assets = { directory = "./web/dist", not_found_handling = "single-page-application", run_worker_first = ["/api/*"] }
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "c-i-db"
+database_id = "f3057bb1-b414-41c9-890d-799ddc6ce491"
+migrations_dir = "migrations"
+
+# ── OFFLINE (Docker, CI y Plan B sin internet): sin Workers AI → el sistema usa el motor determinista ──
+[env.offline]
+name = "c-i-offline"
+assets = { directory = "./web/dist", not_found_handling = "single-page-application", run_worker_first = ["/api/*"] }
+
+[[env.offline.d1_databases]]
+binding = "DB"
+database_name = "c-i-db-offline"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
