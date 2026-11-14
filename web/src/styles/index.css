@@ -297,3 +297,8 @@ body {
 .press:active:not(:disabled) {
   transform: scale(0.98);
 }
+
+/* Correo recién llegado: entra deslizándose y destella con el color de su nivel. */
+.animate-arrive {
+  animation: ci-slide-in 400ms var(--ease-out-expo) both, ci-flash 900ms ease-out 1;
+}
