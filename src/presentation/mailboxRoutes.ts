@@ -5,7 +5,9 @@ import type { AppEnv } from "../env";
 import { DEMO_SCENARIOS, findScenario } from "../application/demoScenarios";
 import { analyzeEmail } from "../application/analyzeEmail";
 import type { MailAnalyzer } from "../application/interimAnalyzer";
+import { approveEmail, escalateEmail } from "../application/actions";
 import { deliverEmail, listMailbox, reviewEmail, type MailboxEmail, type MailboxStorePort } from "../application/mailbox";
+import { domainStoreFor } from "../infrastructure/domainStore";
 import { getCurrentUser, requireRole } from "../infrastructure/auth";
 import { AuditRepository, emailRepository } from "../infrastructure/d1Repos";
 import { parseEmail } from "../infrastructure/emailParser";
@@ -85,6 +87,7 @@ mailboxRoutes.post("/deliver", requireRole("ANALYST") as never, async (c) => {
     store: storeFor(c.env.DB), audit: new AuditRepository(c.env.DB),
     analyze: w4Analyzer(c.env.AI),
     sanitize: (t) => sanitizePii(t).sanitized, newId: () => crypto.randomUUID(), now: () => new Date(),
+    isBlocked: (d) => domainStoreFor(c.env.DB).isBlocked(d),
   });
   return c.json(result, 201);
 });
@@ -97,3 +100,13 @@ mailboxRoutes.post("/:id/review", requireRole("SUPERVISOR") as never, async (c) 
   if (!r) return c.json({ error: "Correo no encontrado." }, 404);
   return c.json(r);
 });
+
+// G7 · Acciones en 1 clic (prototipo): Marcar seguro y Escalar a CISO.
+for (const [action, fn] of [["approve", approveEmail], ["escalate", escalateEmail]] as const) {
+  mailboxRoutes.post(`/:id/${action}`, requireRole("ANALYST") as never, async (c) => {
+    const user = await getCurrentUser(c as never);
+    const r = await fn(c.req.param("id"), user?.display_name ?? "desconocido", { store: storeFor(c.env.DB), audit: new AuditRepository(c.env.DB) });
+    if (!r) return c.json({ error: "Correo no encontrado." }, 404);
+    return c.json(r);
+  });
+}
