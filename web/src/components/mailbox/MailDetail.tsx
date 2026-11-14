@@ -1,10 +1,11 @@
-// Detalle del correo: encabezados, medidor, contenido neutralizado, hallazgos, fundamento legal y decisión (PR G5).
-import { ArrowUpRight, Ban, CheckCircle2, Eye, ScanSearch, ShieldCheck, Undo2 } from "lucide-react";
+// Detalle del correo: encabezados, medidor, contenido neutralizado, resumen de hallazgos (detalle en modal descargable .md), fundamento legal y decisión (PR G5).
+import { ArrowUpRight, Ban, CheckCircle2, Download, Eye, ListChecks, ScanSearch, ShieldCheck, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { navigate } from "../../app/router";
 import type { EmailDto, Role } from "../../types/contracts";
-import { AiBadge, Button, Card, Eyebrow, FolderBadge, ReviewBadge, RiskMeter, RISK } from "../ui";
+import { AiBadge, Button, Card, Eyebrow, FolderBadge, Modal, ReviewBadge, RiskMeter, RISK } from "../ui";
 import { CATEGORY } from "./categories";
+import { downloadMarkdown, findingsMarkdown, reportFilename } from "./report";
 
 const ACTION = {
   CRITICAL: "No abrir enlaces ni adjuntos. Mantener en cuarentena y reportar al área de seguridad.",
@@ -16,6 +17,7 @@ const URL_RE = /(https?:\/\/[^\s<>"')\]]+)/g;
 
 export function MailDetail({ email, role, onReview, onAction }: { email: EmailDto; role: Role; onReview: (d: "CONFIRM" | "RESTORE") => void; onAction: (k: "approve" | "escalate" | "block") => void }) {
   const [reveal, setReveal] = useState(false);
+  const [showFindings, setShowFindings] = useState(false);
   const isQuarantine = email.folder === "QUARANTINE";
   const blurred = isQuarantine && !reveal;
   const isCiso = role !== "ANALYST";
@@ -23,6 +25,8 @@ export function MailDetail({ email, role, onReview, onAction }: { email: EmailDt
   const risky = email.risk_level === "HIGH" || email.risk_level === "CRITICAL";
   const findings = email.indicators.filter((i) => (i.weight ?? 1) > 0);
   const trust = email.indicators.filter((i) => (i.weight ?? 1) < 0);
+  // resumen por categoría para la vista compacta (el detalle va en el modal)
+  const cats = Object.entries(findings.reduce<Record<string, number>>((acc, f) => { const l = (CATEGORY[f.category] ?? CATEGORY.OTROS).label; acc[l] = (acc[l] ?? 0) + 1; return acc; }, {}));
 
   return (
     <Card className="animate-enter min-w-0 space-y-5" key={email.id}>
@@ -51,23 +55,39 @@ export function MailDetail({ email, role, onReview, onAction }: { email: EmailDt
         )}
       </div>
 
-      {findings.length > 0 && (
-        <section>
-          <h3 className="mb-2 font-semibold text-ink">Hallazgos técnicos</h3>
-          <ul className="space-y-2">
-            {[...findings, ...trust].map((f, i) => {
-              const cat = (f.weight ?? 1) < 0 ? CATEGORY.CONFIANZA : CATEGORY[f.category] ?? CATEGORY.OTROS;
-              const Icon = cat.icon;
-              return (
-                <li key={i} className="flex gap-3 rounded-control border border-line bg-surface-2 p-3">
-                  <Icon size={18} className="mt-0.5 shrink-0 text-ink-2" aria-hidden />
-                  <div><Eyebrow>{cat.label}</Eyebrow><p className="text-sm text-ink">{f.text}</p></div>
-                </li>
-              );
-            })}
-          </ul>
+      {email.indicators.length > 0 && (
+        <section className="flex flex-wrap items-center gap-3 rounded-control border border-line bg-surface-2 p-4">
+          <div className="min-w-[200px] flex-1">
+            <h3 className="font-semibold text-ink">Hallazgos técnicos</h3>
+            <p className="mt-0.5 text-sm text-ink-muted">{findings.length} {findings.length === 1 ? "señal de riesgo" : "señales de riesgo"}{trust.length > 0 ? ` · ${trust.length} de confianza` : ""}</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {cats.map(([label, n]) => <span key={label} className="rounded-badge border border-line-strong bg-surface px-2 py-0.5 text-[11px] font-medium text-ink-2">{label} · {n}</span>)}
+            </div>
+          </div>
+          <Button variant="secondary" icon={<ListChecks size={16} />} onClick={() => setShowFindings(true)}>Ver hallazgos</Button>
         </section>
       )}
+
+      <Modal open={showFindings} onClose={() => setShowFindings(false)} title="Hallazgos técnicos" subtitle={email.subject}
+        footer={<>
+          <Button variant="secondary" onClick={() => setShowFindings(false)}>Cerrar</Button>
+          <Button variant="navy" icon={<Download size={16} />} onClick={() => downloadMarkdown(reportFilename(email), findingsMarkdown(email, email.risk_level ? ACTION[email.risk_level] : ACTION.SAFE))}>Descargar .md</Button>
+        </>}>
+        {email.risk_score !== null && <div className="mb-4"><RiskMeter score={email.risk_score} /></div>}
+        <ul className="space-y-2">
+          {[...findings, ...trust].map((f, i) => {
+            const cat = (f.weight ?? 1) < 0 ? CATEGORY.CONFIANZA : CATEGORY[f.category] ?? CATEGORY.OTROS;
+            const Icon = cat.icon;
+            return (
+              <li key={i} className="animate-enter flex gap-3 rounded-control border border-line bg-surface-2 p-3" style={{ animationDelay: `${i * 35}ms` }}>
+                <Icon size={18} className="mt-0.5 shrink-0 text-ink-2" aria-hidden />
+                <div className="min-w-0 flex-1"><Eyebrow>{cat.label}</Eyebrow><p className="text-sm text-ink">{f.text}</p></div>
+                {f.weight !== undefined && f.weight !== null && <span className={`self-start rounded-badge px-1.5 font-mono text-xs font-semibold ${f.weight < 0 ? "bg-safe-soft text-safe" : "bg-critical-soft text-critical"}`}>{f.weight > 0 ? `+${f.weight}` : f.weight}</span>}
+              </li>
+            );
+          })}
+        </ul>
+      </Modal>
 
       {email.legal_basis.length > 0 && (
         <section>

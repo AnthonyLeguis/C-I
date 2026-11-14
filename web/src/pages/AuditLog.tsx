@@ -40,7 +40,7 @@ export function AuditLogPage() {
           {ok ? <ShieldCheck size={14} aria-hidden /> : <ShieldX size={14} aria-hidden />} {chain ? (ok ? `CADENA ÍNTEGRA · ${chain.total} REGISTROS` : "CADENA ALTERADA") : `${data?.total ?? 0} REGISTROS`}
         </span>
         {user?.role === "ADMIN" && <Button size="sm" variant="secondary" icon={<ShieldCheck size={15} />} onClick={() => void verify()}>Verificar integridad</Button>}
-        <a href={api.auditCsvUrl} className="press inline-flex h-8 items-center gap-1.5 rounded-control border border-line-strong bg-surface px-3 text-xs font-semibold text-ink" download><Download size={15} aria-hidden /> Exportar CSV</a>
+        {user?.role !== "ANALYST" && <a href={api.auditCsvUrl} className="press inline-flex h-8 items-center gap-1.5 rounded-control border border-line-strong bg-surface px-3 text-xs font-semibold text-ink" download><Download size={15} aria-hidden /> Exportar CSV</a>}
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">

@@ -1,12 +1,9 @@
 // Panel Principal (PR G6 · PLAN_UX §4.1, prototipo de Alejandro).
 import { Clock, Lock, MailCheck, MailWarning, ShieldCheck, ShieldX } from "lucide-react";
 import { navigate } from "../app/router";
-import { CATEGORY } from "../components/mailbox/categories";
 import { HBars, RiskDonut, TimelineChart } from "../components/dashboard/Charts";
 import { AlertBadge, Button, Card, CardHeader, ErrorState, KpiCard, SkeletonCard, Stagger } from "../components/ui";
 import { useDashboard } from "../hooks/useDashboard";
-import { useSession } from "../hooks/useSession";
-import type { IndicatorCategory } from "../types/contracts";
 
 const ENTITY_HINT: Record<string, string> = {
   SUDEBAN: "Suplantación regulatoria y captura de credenciales", BANCO_DEMO: "Fraude ejecutivo (BEC) y alertas apócrifas",
@@ -16,12 +13,9 @@ const ENTITY_HINT: Record<string, string> = {
 
 export function DashboardPage() {
   const { data, error, reload } = useDashboard();
-  const { user } = useSession();
   if (error) return <ErrorState text={error} onRetry={reload} />;
   if (!data) return <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{[0, 1, 2, 3].map((i) => <SkeletonCard key={i} lines={1} />)}</div>;
   const k = data.kpis;
-  const isCiso = user?.role !== "ANALYST";
-
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <Stagger className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -36,15 +30,11 @@ export function DashboardPage() {
         <Card><CardHeader title="Entidades más suplantadas" subtitle="Conteo por identidad afectada (riesgo alto y crítico)" />
           <HBars items={data.top_impersonated.map((t) => ({ label: t.entity, value: t.count, hint: ENTITY_HINT[t.entity] }))} color="var(--critical)" />
         </Card>
-        <Card><CardHeader title="Correos vs. amenazas por hora" subtitle="Últimas 12 horas" /><TimelineChart points={data.timeline} /></Card>
-        <Card><CardHeader title="Tipos de indicador" subtitle="Qué delata a los correos peligrosos" />
-          <HBars items={(Object.entries(data.by_indicator_category) as [IndicatorCategory, number][]).sort((a, b) => b[1] - a[1]).map(([c, v]) => ({ label: CATEGORY[c]?.label ?? c, value: v }))} color="var(--sidebar)" />
-        </Card>
+        <Card className="xl:col-span-2"><CardHeader title="Correos vs. amenazas por hora" subtitle="Últimas 12 horas" /><TimelineChart points={data.timeline} /></Card>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        {isCiso && (
-          <Card>
+        <Card>
             <CardHeader title="Casos prioritarios para triaje" subtitle="Correos en espera de decisión" action={<Button size="sm" variant="secondary" onClick={() => navigate("buzon")}>Ver todos en Buzón</Button>} />
             {data.review_queue.length === 0 ? <p className="text-sm text-ink-muted">No hay casos pendientes. ¡Bien!</p> : (
               <ul className="space-y-2">
@@ -61,8 +51,7 @@ export function DashboardPage() {
               </ul>
             )}
           </Card>
-        )}
-        <Card className={isCiso ? "" : "xl:col-span-2"}>
+        <Card>
           <CardHeader title="Últimos eventos" subtitle="Bitácora con hash encadenado"
             action={<span className={`inline-flex items-center gap-1 rounded-badge border px-2 py-0.5 text-xs font-semibold ${data.chain_ok ? "border-safe/40 bg-safe-soft text-safe" : "border-critical/40 bg-critical-soft text-critical"}`}>{data.chain_ok ? <ShieldCheck size={13} aria-hidden /> : <ShieldX size={13} aria-hidden />}{data.chain_ok ? "CADENA ÍNTEGRA" : "CADENA ALTERADA"}</span>} />
           <ul className="divide-y divide-line">

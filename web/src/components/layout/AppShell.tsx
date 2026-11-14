@@ -1,9 +1,10 @@
 // Estructura de la app autenticada: menú lateral, barra superior y contenido (PR G5).
 import { useEffect, useState, type ReactNode } from "react";
 import { navigate, type RouteKey } from "../../app/router";
+import { requestMailboxFocus } from "../../hooks/useMailbox";
 import { useSession } from "../../hooks/useSession";
 import { api } from "../../services/apiClient";
-import type { AiStatus } from "../../types/contracts";
+import type { AiStatus, DashboardResponse } from "../../types/contracts";
 import { PageTransition, Sidebar, Topbar, type NavKey } from "../ui";
 
 const TITLES: Record<NavKey, [string, string]> = {
@@ -23,10 +24,11 @@ export function AppShell({ active, children }: { active: NavKey; children: React
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [pending, setPending] = useState(0);
+  const [queue, setQueue] = useState<DashboardResponse["review_queue"]>([]);
   const [ai, setAi] = useState<AiStatus>("UNKNOWN");
 
   useEffect(() => {
-    const load = () => api.dashboard().then((d) => { setPending(d.kpis.pending_review); setAi(d.ai_status); }).catch(() => undefined);
+    const load = () => api.dashboard().then((d) => { setPending(d.kpis.pending_review); setQueue(d.review_queue); setAi(d.ai_status); }).catch(() => undefined);
     load();
     const id = window.setInterval(load, 30_000);
     return () => window.clearInterval(id);
@@ -45,7 +47,9 @@ export function AppShell({ active, children }: { active: NavKey; children: React
         onClose={() => setOpen(false)} onNavigate={(k) => navigate(k as RouteKey)} />
       <div className="min-w-0 flex-1">
         <Topbar title={title} subtitle={subtitle} aiStatus={ai} user={{ display_name: user.display_name, role: user.role }} onMenu={() => setOpen(true)}
-          onLogout={() => { void logout().then(() => navigate("login", true)); }} />
+          onLogout={() => { void logout().then(() => navigate("login", true)); }}
+          pending={{ count: pending, items: queue }}
+          onOpenCase={(id) => { if (id) requestMailboxFocus(id); navigate("buzon"); }} />
         <PageTransition key={active} className="p-4 sm:p-6">{children}</PageTransition>
       </div>
     </div>
