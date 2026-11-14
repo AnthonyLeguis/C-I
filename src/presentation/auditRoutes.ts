@@ -36,9 +36,9 @@ auditRoutes.get("/export.csv", requireRole("SUPERVISOR") as never, async (c) => 
   });
 });
 
-/** G6 · GET /audit/events — bitácora para la pantalla (CISO y Master). Filtros: module, level, q; límite 200. */
+/** G6 · GET /audit/events — bitácora para la pantalla (todos los perfiles: lectura; exportar y verificar siguen restringidos). Filtros: module, level, q; límite 200. */
 const EVENT_COLUMNS = "id, created_at, module, actor, risk_level, risk_score, action_taken, email_id, xai_explanation, ai_used, ai_model, prev_hash, hash";
-auditRoutes.get("/events", requireRole("SUPERVISOR") as never, async (c) => {
+auditRoutes.get("/events", requireRole("ANALYST") as never, async (c) => {
   const module = c.req.query("module");
   const level = c.req.query("level");
   const q = (c.req.query("q") ?? "").trim().toLowerCase();

@@ -86,3 +86,20 @@ describe("contratos de la API", () => {
     expect(r.status).toBe(404);
   });
 });
+
+describe("vistas para todos los perfiles, acciones por rol", () => {
+  it("el Analista puede leer Consola y Bitácora (no 403), pero no actuar en la Consola (403)", async () => {
+    const cookie = await analystCookie();
+    for (const path of ["/api/v1/support/status", "/api/v1/audit/events", "/api/v1/domains/blocked"]) {
+      // sin base de datos en la prueba la ruta puede fallar (500), pero nunca por permisos (403)
+      const r = await Promise.resolve(app.request(path, { headers: { cookie } }, env)).catch(() => null);
+      expect(r?.status, path).not.toBe(403);
+    }
+    const mode = await app.request("/api/v1/support/mode", json({ mode: "RULES" }, cookie), env);
+    expect(mode.status).toBe(403);
+    const reset = await app.request("/api/v1/support/reset-demo", json({ with_samples: true }, cookie), env);
+    expect(reset.status).toBe(403);
+    const verify = await app.request("/api/v1/audit/verify", { headers: { cookie } }, env);
+    expect(verify.status).toBe(403);
+  });
+});

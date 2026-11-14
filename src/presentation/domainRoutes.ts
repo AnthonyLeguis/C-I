@@ -11,7 +11,7 @@ const BlockRequest = z.object({ domain: z.string().min(3).max(253), reason: z.st
 
 export const domainRoutes = new Hono<AppEnv>();
 
-domainRoutes.get("/blocked", requireRole("SUPERVISOR") as never, async (c) => c.json({ domains: await domainStoreFor(c.env.DB).list() }));
+domainRoutes.get("/blocked", requireRole("ANALYST") as never, async (c) => c.json({ domains: await domainStoreFor(c.env.DB).list() }));
 
 domainRoutes.post("/block", requireRole("SUPERVISOR") as never, async (c) => {
   const parsed = BlockRequest.safeParse(await c.req.json().catch(() => null));

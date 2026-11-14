@@ -4,6 +4,7 @@
 import { ChevronLeft, LayoutDashboard, Mail, MessageSquareText, ScanSearch, ScrollText, Wrench, X, type LucideIcon } from "lucide-react";
 import type { Role } from "../../types/contracts";
 import { BrandLockup } from "./Logo";
+import { ThemeSwitch } from "./ThemeToggle";
 
 export type NavKey = "panel" | "buzon" | "analizar" | "asistente" | "bitacora" | "soporte";
 interface NavItem { key: NavKey; label: string; icon: LucideIcon; minRole: Role; group: "main" | "control" }
@@ -13,8 +14,8 @@ export const NAV: NavItem[] = [
   { key: "buzon", label: "Buzón de Alertas", icon: Mail, minRole: "ANALYST", group: "main" },
   { key: "analizar", label: "Analizador de Casos", icon: ScanSearch, minRole: "ANALYST", group: "main" },
   { key: "asistente", label: "Asistente IA", icon: MessageSquareText, minRole: "ANALYST", group: "main" },
-  { key: "bitacora", label: "Bitácora de Eventos", icon: ScrollText, minRole: "SUPERVISOR", group: "control" },
-  { key: "soporte", label: "Consola de Soporte", icon: Wrench, minRole: "ADMIN", group: "control" },
+  { key: "bitacora", label: "Bitácora de Eventos", icon: ScrollText, minRole: "ANALYST", group: "control" },
+  { key: "soporte", label: "Consola de Soporte", icon: Wrench, minRole: "ANALYST", group: "control" },
 ];
 const RANK: Record<Role, number> = { ANALYST: 1, SUPERVISOR: 2, ADMIN: 3 };
 
@@ -30,7 +31,7 @@ export interface SidebarProps {
 }
 
 export function Sidebar({ active, role, pendingCount = 0, open, collapsed, onToggleCollapsed, onClose, onNavigate }: SidebarProps) {
-  const items = NAV.filter((n) => RANK[role] >= RANK[n.minRole]); // lo que el rol no permite, no se muestra
+  const items = NAV.filter((n) => RANK[role] >= RANK[n.minRole]); // todas las vistas para los 3 perfiles; las acciones se limitan dentro de cada vista
   const groups = [
     { id: "main", label: "Menú", items: items.filter((i) => i.group === "main") },
     { id: "control", label: "Control", items: items.filter((i) => i.group === "control") },
@@ -102,8 +103,16 @@ export function Sidebar({ active, role, pendingCount = 0, open, collapsed, onTog
           ))}
         </nav>
 
-        <div className={`border-t border-line px-4 py-3 text-[11px] text-ink-muted ${rail ? "lg:hidden" : ""}`}>
-          Datos sintéticos · UNETI IA 2026
+        {/* Pie: interruptor claro/oscuro y firma */}
+        <div className={`space-y-2 border-t border-line px-3 py-3 ${rail ? "lg:px-0" : ""}`}>
+          <div className={rail ? "lg:flex lg:justify-center" : ""}>
+            <span className={rail ? "hidden lg:block" : "hidden"}><ThemeSwitch compact /></span>
+            <span className={rail ? "lg:hidden" : ""}><ThemeSwitch /></span>
+          </div>
+          <p className={`px-2 font-mono text-[10px] tracking-[0.12em] text-ink-muted ${rail ? "lg:px-0 lg:text-center" : ""}`}>
+            <span className={rail ? "lg:hidden" : ""}>Por: C&amp;I - 2026</span>
+            {rail && <span className="hidden lg:inline">C&amp;I</span>}
+          </p>
         </div>
       </aside>
     </>

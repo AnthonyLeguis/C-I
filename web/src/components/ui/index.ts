@@ -6,6 +6,7 @@ export * from "./CyberBackground";
 export * from "./KpiCard";
 export * from "./levels";
 export * from "./Logo";
+export * from "./Modal";
 export * from "./motion";
 export * from "./RiskMeter";
 export * from "./Sidebar";

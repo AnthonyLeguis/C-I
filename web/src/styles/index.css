@@ -409,6 +409,16 @@ body {
   }
 }
 
+/* Campana de notificaciones con casos pendientes: un leve vaivén cada pocos segundos. */
+@keyframes ci-ring {
+  0%, 70%, 100% { transform: rotate(0); }
+  74% { transform: rotate(14deg); }
+  80% { transform: rotate(-12deg); }
+  86% { transform: rotate(8deg); }
+  92% { transform: rotate(-4deg); }
+}
+@media (prefers-reduced-motion: reduce) { .animate-\[ci-ring_2\.4s_ease-in-out_infinite\] { animation: none !important; } }
+
 /* Tooltip del menú lateral contraído. */
 .nav-tip {
   position: absolute;

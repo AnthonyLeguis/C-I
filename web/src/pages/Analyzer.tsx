@@ -1,9 +1,8 @@
 // Pantalla del Analizador de Casos (PR X3 · PLAN_UX §5.4).
-import { ScanSearch } from "lucide-react";
 import { useState } from "react";
 import { AnalyzerForm } from "../components/analyzer/AnalyzerForm";
 import { AnalyzerVerdict } from "../components/analyzer/AnalyzerVerdict";
-import { EmptyState, ErrorState, SkeletonCard, useToast } from "../components/ui";
+import { ErrorState, SkeletonCard, useToast } from "../components/ui";
 import { api } from "../services/apiClient";
 import type { AnalyzeRequest, AnalyzeResponse } from "../types/contracts";
 
@@ -65,8 +64,10 @@ export function AnalyzerPage() {
     setError(null);
   };
 
+  // Sin dictamen todavía: el formulario va solo y centrado (sin tarjeta vacía al lado).
+  const idle = !loading && error === null && result === null;
   return (
-    <div className="mx-auto grid max-w-7xl items-start gap-4 lg:grid-cols-2">
+    <div className={`mx-auto grid items-start gap-4 transition-[max-width] duration-300 ${idle ? "max-w-3xl" : "max-w-7xl lg:grid-cols-2"}`}>
       <AnalyzerForm
         value={form}
         onChange={change}
@@ -75,7 +76,7 @@ export function AnalyzerPage() {
         onClear={clear}
       />
 
-      <div className="min-w-0 space-y-4" aria-live="polite">
+      <div className={`min-w-0 space-y-4 ${idle ? "hidden" : ""}`} aria-live="polite">
         {error !== null && <ErrorState text={error} onRetry={() => void analyze()} />}
         {loading && (
           <div className="space-y-4" role="status" aria-label="Analizando correo">
@@ -84,13 +85,6 @@ export function AnalyzerPage() {
           </div>
         )}
         {!loading && error === null && result !== null && <AnalyzerVerdict result={result} />}
-        {!loading && error === null && result === null && (
-          <EmptyState
-            icon={ScanSearch}
-            title="Pega un correo o elige un ejemplo"
-            text="El dictamen mostrará el riesgo, los indicadores, el fundamento legal y la acción recomendada."
-          />
-        )}
       </div>
     </div>
   );
