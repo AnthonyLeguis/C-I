@@ -13,11 +13,11 @@ const READY: Screen[] = [
   { name: "Panel Principal", desc: "KPI, gráficas, triaje y eventos con sello de cadena.", icon: LayoutDashboard, href: "/panel", owner: "Gabriel", point: "G4 + G6" },
   { name: "Buzón de Alertas", desc: "Simular llegada, cuarentena, decisiones y bloqueo.", icon: Mail, href: "/buzon", owner: "Gabriel + Williams", point: "G3 + G5 + G7 + W4" },
   { name: "Bitácora de Eventos", desc: "Filtros, verificación de integridad y CSV.", icon: ScrollText, href: "/bitacora", owner: "Gabriel", point: "G2 + G6" },
+  { name: "Analizador de Casos", desc: "Analiza cualquier correo con reglas, IA y fundamento legal.", icon: ScanSearch, href: "/analizar", owner: "Williams", point: "W4 + X3" },
   { name: "Asistente IA", desc: "Preguntas con datos tapados y guardián ético (IA real).", icon: MessageSquareText, href: "/asistente", owner: "Anthony", point: "A3 + A4" },
   { name: "Kit de componentes", desc: "Colores, niveles de alerta, medidor, KPI y animaciones.", icon: Palette, href: "/ui", owner: "Anthony", point: "X1 + X2" },
 ];
 const PENDING: Screen[] = [
-  { name: "Analizador de Casos", desc: "Expediente y acciones en 1 clic.", icon: ScanSearch, owner: "Williams", point: "X3", mock: "10-analizador-expediente.jpg" },
   { name: "Consola de Soporte", desc: "Estado del sistema y modo reglas.", icon: Wrench, owner: "Anthony", point: "A6", mock: "14-consola-soporte.jpg" },
 ];
 
