@@ -1,6 +1,6 @@
 // ÚNICO archivo del frontend donde se permite fetch(). Archivo compartido: solo lo modifica Anthony.
 import type {
-  AnalyzeRequest, AnalyzeResponse, AskResponse, DashboardResponse, Folder, HealthResponse, MailboxResponse, ReviewResponse, User,
+  AnalyzeRequest, AnalyzeResponse, AskResponse, DashboardResponse, Folder, HealthResponse, MailboxResponse, ReviewResponse, TimelineQaResponse, User,
 } from "../types/contracts";
 
 export class ApiClientError extends Error {
@@ -36,5 +36,6 @@ export const api = {
   review: (emailId: string, decision: "CONFIRM" | "RESTORE") => post<ReviewResponse>(`/mailbox/${emailId}/review`, { decision }),
   dashboard: () => request<DashboardResponse>("/dashboard"),
   ask: (question: string, emailId: string | null = null) => post<AskResponse>("/assistant/ask", { question, email_id: emailId }),
+  timelineQa: () => request<TimelineQaResponse>("/timeline-qa"), // MÓDULO ELIMINABLE
   verifyAudit: () => request<{ chain_ok: boolean; records: number; broken_at: number | null }>("/audit/verify"),
 };

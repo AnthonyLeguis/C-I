@@ -91,3 +91,21 @@ export interface DashboardResponse {
 }
 
 export interface ApiError { error: string }
+
+// ── MÓDULO ELIMINABLE "timeline-qa" ──
+export type TimelinePointStatus = "DEVELOPMENT" | "QA" | "PR_ABIERTO" | "PENDIENTE";
+export interface TimelinePoint {
+  code: string;
+  title: string;
+  cp: string;
+  status: TimelinePointStatus;
+  detail: { sha?: string; date?: string; message?: string; number?: number; url?: string; title?: string; created?: string } | null;
+}
+export interface TimelineDeveloper { id: string; name: string; github: string; total: number; done: number; percent: number; points: TimelinePoint[] }
+export interface TimelineQaResponse {
+  generated_at: string;
+  stored_at: string;
+  development_sha: string;
+  team: { total: number; done: number; percent: number };
+  developers: TimelineDeveloper[];
+}
