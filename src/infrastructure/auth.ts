@@ -28,50 +28,40 @@ export type AuthEnv = AppEnv & {
   };
 };
 
-// Fallback en memoria para pruebas unitarias sin base de datos D1 conectada
-const DEMO_FALLBACK_USERS: Record<
+/** Usuarios del prototipo. Quick-login solo funciona con estos tres. */
+export const DEMO_USERS: Record<
   string,
   { user: SessionUser; salt: string; hash: string }
 > = {
-  supervisor: {
+  jrios: {
     user: {
       id: "00000000-0000-4000-8000-000000000001",
-      username: "supervisor",
-      display_name: "Supervisor de seguridad (demo)",
+      username: "jrios",
+      display_name: "Javier Ríos",
+      role: "ANALYST",
+    },
+    salt: "10000000000000000000000000000001",
+    hash: "3fa4df95912cae1839c96d08447862761e2b64522735ecf83f6b9cd55852a92f",
+  },
+  svalenzuela: {
+    user: {
+      id: "00000000-0000-4000-8000-000000000002",
+      username: "svalenzuela",
+      display_name: "Dra. Sofía Valenzuela",
       role: "SUPERVISOR",
     },
     salt: "10000000000000000000000000000002",
     hash: "9da21c41ecd136547ebdd93f3e547163524a8a9c722a7a3186466dbf9e0a4ca7",
   },
-  analista: {
+  cmendoza: {
     user: {
-      id: "00000000-0000-4000-8000-000000000002",
-      username: "analista",
-      display_name: "Analista de seguridad (demo)",
-      role: "ANALYST",
+      id: "00000000-0000-4000-8000-000000000003",
+      username: "cmendoza",
+      display_name: "Carlos Mendoza",
+      role: "ADMIN",
     },
     salt: "10000000000000000000000000000003",
     hash: "a7cadf824fcdc278470aaead86b55188b4ac1109c817048f6053228f0bfb50fb",
-  },
-  analyst: {
-    user: {
-      id: "00000000-0000-4000-8000-000000000004",
-      username: "analyst",
-      display_name: "Analista de seguridad (demo · alias)",
-      role: "ANALYST",
-    },
-    salt: "10000000000000000000000000000004",
-    hash: "73fa645aac124215f43fc2ed0fb91fa78b9eb9653560f9053618d8076e44fad1",
-  },
-  admin: {
-    user: {
-      id: "00000000-0000-4000-8000-000000000003",
-      username: "admin",
-      display_name: "Administrador de la plataforma (demo)",
-      role: "ADMIN",
-    },
-    salt: "10000000000000000000000000000001",
-    hash: "3fa4df95912cae1839c96d08447862761e2b64522735ecf83f6b9cd55852a92f",
   },
 };
 
@@ -111,6 +101,18 @@ async function getHmacKey(secretText: string): Promise<CryptoKey> {
     false,
     ["sign", "verify"]
   );
+}
+
+/** Obtiene SESSION_SECRET del entorno. Lanza error si no existe. */
+export function getSessionSecret<E extends AppEnv = AppEnv>(
+  c: Context<E>
+): string {
+  const env = c.env as AppEnv["Bindings"] | undefined;
+  const secret = env?.SESSION_SECRET;
+  if (!secret) {
+    throw new Error("SESSION_SECRET no configurado");
+  }
+  return secret;
 }
 
 /** Firma un payload de sesión con HMAC-SHA256 usando SESSION_SECRET. */
@@ -213,14 +215,16 @@ export function clearSessionCookie(c: Context): void {
   );
 }
 
-/** Obtiene el usuario autenticado en la petición actual a partir de la cookie de sesión. */
+/** Obtiene el usuario autenticado en la petición actual a partir de la cookie de sesión.
+ *  Devuelve null si no hay cookie o si SESSION_SECRET no está configurado. */
 export async function getCurrentUser<E extends AppEnv = AppEnv>(
   c: Context<E>
 ): Promise<SessionUser | null> {
   const token = getSessionCookie(c);
   if (!token) return null;
   const env = c.env as AppEnv["Bindings"] | undefined;
-  const secret = env?.SESSION_SECRET || "dev-session-key";
+  const secret = env?.SESSION_SECRET;
+  if (!secret) return null;
   const session = await verifySession(token, secret);
   return session ? session.user : null;
 }
@@ -277,19 +281,29 @@ export async function authenticateUser<E extends AppEnv = AppEnv>(
   }
 
   // 2. Respaldo en memoria (demo / pruebas sin D1 instanciado)
-  const fallback = DEMO_FALLBACK_USERS[normUser];
-  if (fallback) {
+  const demo = DEMO_USERS[normUser];
+  if (demo) {
     const isValid = await verifyPassword(
       passwordInput,
-      fallback.hash,
-      fallback.salt
+      demo.hash,
+      demo.salt
     );
     if (isValid) {
-      return fallback.user;
+      return demo.user;
     }
   }
 
   return null;
+}
+
+/**
+ * Quick-login para los 3 usuarios del prototipo (solo demo, sin contraseña).
+ * Solo funciona con jrios, svalenzuela y cmendoza. Cualquier otro → null.
+ */
+export function quickLoginUser(usernameInput: string): SessionUser | null {
+  const normUser = usernameInput.trim().toLowerCase();
+  const demo = DEMO_USERS[normUser];
+  return demo ? demo.user : null;
 }
 
 /**

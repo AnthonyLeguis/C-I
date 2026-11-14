@@ -62,9 +62,9 @@ describe("G1 — Sesión firmada con HMAC (auth.ts)", () => {
   it("firma y verifica un payload de sesión válido", async () => {
     const payload = {
       user: {
-        id: "00000000-0000-4000-8000-000000000001",
-        username: "supervisor",
-        display_name: "Supervisor de seguridad (demo)",
+        id: "00000000-0000-4000-8000-000000000002",
+        username: "svalenzuela",
+        display_name: "Dra. Sofía Valenzuela",
         role: "SUPERVISOR" as const,
       },
       exp: Math.floor(Date.now() / 1000) + 3600,
@@ -74,16 +74,16 @@ describe("G1 — Sesión firmada con HMAC (auth.ts)", () => {
 
     const recovered = await verifySession(signed, "ci-test-key-321");
     expect(recovered).not.toBeNull();
-    expect(recovered?.user.username).toBe("supervisor");
+    expect(recovered?.user.username).toBe("svalenzuela");
     expect(recovered?.user.role).toBe("SUPERVISOR");
   });
 
   it("rechaza sesiones alteradas o con firma inválida", async () => {
     const payload = {
       user: {
-        id: "00000000-0000-4000-8000-000000000001",
-        username: "supervisor",
-        display_name: "Supervisor",
+        id: "00000000-0000-4000-8000-000000000002",
+        username: "svalenzuela",
+        display_name: "Dra. Sofía Valenzuela",
         role: "SUPERVISOR" as const,
       },
       exp: Math.floor(Date.now() / 1000) + 3600,
@@ -97,9 +97,9 @@ describe("G1 — Sesión firmada con HMAC (auth.ts)", () => {
   it("rechaza sesiones expiradas", async () => {
     const expiredPayload = {
       user: {
-        id: "00000000-0000-4000-8000-000000000001",
-        username: "supervisor",
-        display_name: "Supervisor",
+        id: "00000000-0000-4000-8000-000000000002",
+        username: "svalenzuela",
+        display_name: "Dra. Sofía Valenzuela",
         role: "SUPERVISOR" as const,
       },
       exp: Math.floor(Date.now() / 1000) - 100, // En el pasado
@@ -111,11 +111,11 @@ describe("G1 — Sesión firmada con HMAC (auth.ts)", () => {
 });
 
 describe("G1 — Endpoints de autenticación (/api/v1/auth)", () => {
-  it("login exitoso con los 3 roles (ADMIN, SUPERVISOR, ANALYST)", async () => {
+  it("login exitoso con los 3 roles del prototipo (ADMIN, SUPERVISOR, ANALYST)", async () => {
     const roles = [
-      { username: "admin", expectedRole: "ADMIN" },
-      { username: "supervisor", expectedRole: "SUPERVISOR" },
-      { username: "analista", expectedRole: "ANALYST" },
+      { username: "cmendoza", expectedRole: "ADMIN" },
+      { username: "svalenzuela", expectedRole: "SUPERVISOR" },
+      { username: "jrios", expectedRole: "ANALYST" },
     ];
 
     for (const r of roles) {
@@ -138,7 +138,7 @@ describe("G1 — Endpoints de autenticación (/api/v1/auth)", () => {
 
   it("login falla con contraseña incorrecta (401)", async () => {
     const res = await jsonPost("/api/v1/auth/login", {
-      username: "supervisor",
+      username: "svalenzuela",
       password: "ClaveInvalida",
     });
     expect(res.status).toBe(401);
@@ -158,7 +158,7 @@ describe("G1 — Endpoints de autenticación (/api/v1/auth)", () => {
 
   it("GET /auth/me devuelve el usuario cuando la cookie de sesión es válida", async () => {
     const loginRes = await jsonPost("/api/v1/auth/login", {
-      username: "supervisor",
+      username: "svalenzuela",
       password: "Demo-2026!",
     });
     const setCookie = loginRes.headers.get("set-cookie") ?? "";
@@ -167,7 +167,7 @@ describe("G1 — Endpoints de autenticación (/api/v1/auth)", () => {
     const meRes = await getWithCookie("/api/v1/auth/me", cookieHeader);
     expect(meRes.status).toBe(200);
     const body = (await meRes.json()) as { user: { username: string; role: string } };
-    expect(body.user.username).toBe("supervisor");
+    expect(body.user.username).toBe("svalenzuela");
     expect(body.user.role).toBe("SUPERVISOR");
   });
 
@@ -178,6 +178,59 @@ describe("G1 — Endpoints de autenticación (/api/v1/auth)", () => {
     expect(cookie).toContain("Max-Age=0");
     const body = (await res.json()) as { ok: boolean };
     expect(body.ok).toBe(true);
+  });
+});
+
+describe("G1 — POST /api/v1/auth/quick-login", () => {
+  it("quick-login con jrios devuelve 200, cookie de sesión y rol ANALYST", async () => {
+    const res = await jsonPost("/api/v1/auth/quick-login", { username: "jrios" });
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { user: { role: string; username: string } };
+    expect(data.user.username).toBe("jrios");
+    expect(data.user.role).toBe("ANALYST");
+    const cookie = res.headers.get("set-cookie");
+    expect(cookie).toBeTruthy();
+    expect(cookie).toContain(SESSION_COOKIE_NAME);
+    expect(cookie).toContain("HttpOnly");
+  });
+
+  it("quick-login con svalenzuela devuelve 200 y rol SUPERVISOR", async () => {
+    const res = await jsonPost("/api/v1/auth/quick-login", { username: "svalenzuela" });
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { user: { role: string; username: string } };
+    expect(data.user.username).toBe("svalenzuela");
+    expect(data.user.role).toBe("SUPERVISOR");
+  });
+
+  it("quick-login con cmendoza devuelve 200 y rol ADMIN", async () => {
+    const res = await jsonPost("/api/v1/auth/quick-login", { username: "cmendoza" });
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { user: { role: string; username: string } };
+    expect(data.user.username).toBe("cmendoza");
+    expect(data.user.role).toBe("ADMIN");
+  });
+
+  it("quick-login con usuario desconocido devuelve 401", async () => {
+    const res = await jsonPost("/api/v1/auth/quick-login", { username: "admin" });
+    expect(res.status).toBe(401);
+  });
+
+  it("quick-login con cuerpo vacío devuelve 400", async () => {
+    const res = await jsonPost("/api/v1/auth/quick-login", {});
+    expect(res.status).toBe(400);
+  });
+
+  it("quick-login con sesión válida permite GET /auth/me", async () => {
+    const loginRes = await jsonPost("/api/v1/auth/quick-login", { username: "cmendoza" });
+    expect(loginRes.status).toBe(200);
+    const setCookie = loginRes.headers.get("set-cookie") ?? "";
+    const cookieHeader = setCookie.split(";")[0];
+
+    const meRes = await getWithCookie("/api/v1/auth/me", cookieHeader);
+    expect(meRes.status).toBe(200);
+    const body = (await meRes.json()) as { user: { username: string; role: string } };
+    expect(body.user.username).toBe("cmendoza");
+    expect(body.user.role).toBe("ADMIN");
   });
 });
 
@@ -195,9 +248,9 @@ describe("G1 — Middleware requireRole con jerarquía", () => {
     const analystToken = await signSession(
       {
         user: {
-          id: "2",
-          username: "analista",
-          display_name: "Analista",
+          id: "00000000-0000-4000-8000-000000000001",
+          username: "jrios",
+          display_name: "Javier Ríos",
           role: "ANALYST",
         },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -215,9 +268,9 @@ describe("G1 — Middleware requireRole con jerarquía", () => {
     const supervisorToken = await signSession(
       {
         user: {
-          id: "1",
-          username: "supervisor",
-          display_name: "Supervisor",
+          id: "00000000-0000-4000-8000-000000000002",
+          username: "svalenzuela",
+          display_name: "Dra. Sofía Valenzuela",
           role: "SUPERVISOR",
         },
         exp: Math.floor(Date.now() / 1000) + 3600,
@@ -235,9 +288,9 @@ describe("G1 — Middleware requireRole con jerarquía", () => {
     const adminToken = await signSession(
       {
         user: {
-          id: "3",
-          username: "admin",
-          display_name: "Admin",
+          id: "00000000-0000-4000-8000-000000000003",
+          username: "cmendoza",
+          display_name: "Carlos Mendoza",
           role: "ADMIN",
         },
         exp: Math.floor(Date.now() / 1000) + 3600,
