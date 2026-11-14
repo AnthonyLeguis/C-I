@@ -19,7 +19,7 @@ if (h.status !== 200 || h.json.status !== "ok") fail("health no responde");
 const page = await fetch(root + "/");
 if (!page.ok || !(await page.text()).includes('id="root"')) fail("el frontend no se está sirviendo");
 
-const login = await call("POST", "/auth/login", { username: "supervisor", password: process.env.SMOKE_PASSWORD ?? "Demo-2026!" });
+const login = await call("POST", "/auth/login", { username: process.env.SMOKE_USER ?? "svalenzuela", password: process.env.SMOKE_PASSWORD ?? "Demo-2026!" });
 if (login.status !== 200) fail("login de demo falló");
 
 const bad = await call("POST", "/mail/analyze", {
