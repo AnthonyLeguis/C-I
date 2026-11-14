@@ -107,6 +107,17 @@ export interface DashboardResponse {
 
 export interface ApiError { error: string }
 
+// ── Consola de Soporte (A6, solo Master) ──
+export type OperationMode = "ONLINE" | "RULES_ONLY";
+export interface SupportStatus {
+  mode: OperationMode;
+  ai: { bound: boolean; active: boolean; model: string | null; status: "EN_LINEA" | "APAGADA" | "NO_DISPONIBLE" };
+  database: { ok: boolean; latency_ms: number | null; emails: number; audit_events: number; blocked_domains: number };
+  mail_source: "BUZON_SIMULADO";
+}
+export interface SupportModeResponse { mode: OperationMode; changed: boolean; audit_hash: string | null }
+export interface SupportResetResponse { emails: number; mode: OperationMode; audit_hash: string }
+
 // ── MÓDULO ELIMINABLE "timeline-qa" ──
 export type TimelinePointStatus = "DEVELOPMENT" | "QA" | "PR_ABIERTO" | "PENDIENTE";
 export interface TimelinePoint {

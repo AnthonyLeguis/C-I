@@ -113,26 +113,30 @@ Seguridad: PBKDF2 (WebCrypto), sesión HMAC en cookie `HttpOnly`, RBAC en cada e
 | `POST /auth/login` · `POST /auth/quick-login` · `POST /auth/logout` · `GET /auth/me` | público / sesión |
 | `POST /mail/analyze` | ANALYST |
 | `GET /mailbox?folder=INBOX\|SPAM\|QUARANTINE` · `POST /mailbox/deliver` | ANALYST |
+| `POST /mailbox/:id/approve` · `POST /mailbox/:id/escalate` | ANALYST |
 | `POST /mailbox/:id/review` `{ "decision": "CONFIRM" \| "RESTORE" }` | SUPERVISOR |
 | `GET /dashboard` | ANALYST |
 | `POST /assistant/ask` | ANALYST |
 | `POST /domains/block` · `GET /domains/blocked` · `DELETE /domains/blocked/:domain` | SUPERVISOR |
-| `GET /audit/export.csv` | SUPERVISOR |
+| `GET /audit/events` · `GET /audit/export.csv` | SUPERVISOR |
 | `GET /audit/verify` | ADMIN |
+| `GET /support/status` · `POST /support/mode` `{ "mode": "ONLINE" \| "RULES_ONLY" }` · `POST /support/reset-demo` | ADMIN |
 
-Planificados en el contrato (§5.2 de `docs/C&I.md`): `POST /mailbox/:id/approve` · `/escalate` y endpoints de soporte (`/support/*`).
+En modo `RULES_ONLY` (Consola de Soporte) ninguna ruta recibe Workers AI y decide solo el motor determinista. Restablecer la demo recarga el buzón sintético y retira los bloqueos, pero **no borra la bitácora**.
 
 Errores: `400 { "error": "..." }` · `401` sin sesión · `403` rol insuficiente. Nunca se devuelve una traza interna.
 
 ## 7. Modelo de datos
 
-Ver `migrations/0001_schema.sql`.
+Ver `migrations/` (`0001_schema.sql`, `0003_actions.sql`, `0004_support.sql`).
 
 | Tabla | Campos principales |
 |---|---|
 | `users` | `id`, `username`, `display_name`, `role` (ADMIN/SUPERVISOR/ANALYST), `password_hash`, `salt` |
 | `emails` | `id`, `from_address`, `reply_to`, `subject`, `body_sanitized` (sin PII), `folder` (INBOX/SPAM/QUARANTINE), `risk_level`, `risk_score`, `indicators`, `legal_basis`, `xai_explanation`, `review_status` (N/A/PENDING/CONFIRMED/RESTORED) |
 | `audit_events` | `id`, `module` (MAIL_ANALYZER/ASSISTANT_GUARD/REVIEW/AUTH), `actor`, `risk_level`, `action_taken`, `pii_detected`, `ai_used`, `ai_model`, `prev_hash`, `hash`, `created_at` |
+| `blocked_domains` | `domain`, `reason`, `blocked_by`, `email_id`, `created_at` (lista corporativa del CISO) |
+| `app_settings` | `key`, `value`, `updated_at` (modo de operación `ONLINE` / `RULES_ONLY`) |
 
 ## 8. Uso de IA (obligatorio)
 
