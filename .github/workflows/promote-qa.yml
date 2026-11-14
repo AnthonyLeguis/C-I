@@ -1,0 +1,54 @@
+# Promoción automática qa → development.
+# Se ejecuta cuando el despliegue de `qa` termina con éxito (npm run check + prueba de humo contra el
+# entorno QA). Si `qa` tiene commits que `development` no tiene, abre (o reutiliza) el PR qa → development
+# y lo une. Luego dispara timeline-qa para actualizar el avance del equipo.
+# `main` (producción) sigue siendo manual.
+name: promote-qa
+on:
+  workflow_run:
+    workflows: [deploy]
+    types: [completed]
+    branches: [qa]
+concurrency: promote-qa
+jobs:
+  promote:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: ¿Hay algo nuevo y probado en qa?
+        id: diff
+        run: |
+          git fetch origin qa development
+          QA_SHA=$(git rev-parse origin/qa)
+          AHEAD=$(git rev-list --count origin/development..origin/qa)
+          echo "qa=$QA_SHA probado=$TESTED_SHA adelantados=$AHEAD"
+          if [ "$AHEAD" = "0" ]; then echo "skip=sin-cambios" >> "$GITHUB_OUTPUT"; exit 0; fi
+          # Solo se promueve exactamente lo que se probó; si qa avanzó, el siguiente despliegue lo hará.
+          if [ "$QA_SHA" != "$TESTED_SHA" ]; then echo "skip=qa-avanzo" >> "$GITHUB_OUTPUT"; exit 0; fi
+          echo "skip=" >> "$GITHUB_OUTPUT"
+      - name: Abrir y unir PR qa → development
+        if: steps.diff.outputs.skip == ''
+        run: |
+          N=$(gh pr list --base development --head qa --state open --json number --jq '.[0].number')
+          if [ -z "$N" ]; then
+            LIST=$(git log --format='- %s' origin/development..origin/qa | head -30)
+            gh pr create --base development --head qa \
+              --title "QA automático aprobado: promoción a development" \
+              --body "Promoción automática tras despliegue y prueba de humo exitosos en QA (commit ${TESTED_SHA:0:7}).
+
+          $LIST"
+            N=$(gh pr list --base development --head qa --state open --json number --jq '.[0].number')
+          fi
+          gh pr merge "$N" --merge
+      - name: Actualizar timeline-qa
+        if: steps.diff.outputs.skip == ''
+        run: gh workflow run timeline-qa.yml --ref development
