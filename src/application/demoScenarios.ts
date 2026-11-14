@@ -27,7 +27,7 @@ export const DEMO_SCENARIOS: DemoScenario[] = [
   },
   {
     id: "factura-macro",
-    label: "Factura con macro (crítico)",
+    label: "Factura con macro (alto)",
     email: {
       fromAddress: "cobranzas@servicios-integrales-ve.info", fromName: "Facturación Proveedores",
       subject: "Factura vencida #FAC-2026-8841 — Evite suspensión de servicio",

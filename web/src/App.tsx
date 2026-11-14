@@ -7,6 +7,8 @@ import { SkeletonCard, ToastProvider } from "./components/ui";
 import { SessionProvider, useSession } from "./hooks/useSession";
 import { AnalyzerPage } from "./pages/Analyzer";
 import { AssistantPage } from "./pages/Assistant";
+import { AuditLogPage } from "./pages/AuditLog";
+import { DashboardPage } from "./pages/Dashboard";
 import { Home } from "./pages/Home";
 import { LoginPage } from "./pages/Login";
 import { MailboxPage } from "./pages/Mailbox";
@@ -41,9 +43,9 @@ function Routes() {
     <AppShell active={route}>
       {route === "buzon" && <MailboxPage />}
       {route === "asistente" && <AssistantPage />}
-      {route === "panel" && <PendingScreen name="Panel Principal" owner="Gabriel (G6)" mock="03-panel-kpi.jpg" />}
+      {route === "panel" && <DashboardPage />}
       {route === "analizar" && <AnalyzerPage />}
-      {route === "bitacora" && <PendingScreen name="Bitácora de Eventos" owner="Gabriel (G6)" mock="12-bitacora.jpg" />}
+      {route === "bitacora" && <AuditLogPage />}
       {route === "soporte" && <PendingScreen name="Consola de Soporte" owner="Anthony (A6)" mock="14-consola-soporte.jpg" />}
     </AppShell>
   );
