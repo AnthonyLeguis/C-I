@@ -4,6 +4,7 @@
 > _"Anticipamos el riesgo. Fortalecemos tu confianza."_
 > Fuente única de verdad del equipo. **Reparto de PR y ramas:** [PLAN_PRS.md](PLAN_PRS.md) · **Diseño:** [PLAN_UX.md](PLAN_UX.md). Vista previa en VS Code: `Ctrl + Shift + V`. Siglas: [GLOSARIO.md](GLOSARIO.md).
 > Metodología oficial del evento: **SDD — "spec primero, código después"**.
+> ℹ️ **Documento de planificación del equipo (kickoff y reparto).** El comportamiento vigente del sistema (puntaje, roles, endpoints y seguridad) está en [`SPEC.md`](../SPEC.md) y [`SECURITY.md`](../SECURITY.md); si hay diferencias, mandan esos dos.
 
 **Equipo**
 
