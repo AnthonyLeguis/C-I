@@ -8,6 +8,7 @@ import { ThemeToggle } from "./components/ui/ThemeToggle";
 import { Logo } from "./components/ui/Logo";
 import { UiShowcase } from "./pages/UiShowcase";
 import { AssistantPreview } from "./pages/AssistantPreview";
+import { TimelineQa } from "./pages/TimelineQa"; // MÓDULO ELIMINABLE
 
 type Status = { kind: "loading" } | { kind: "ok"; data: HealthResponse } | { kind: "error"; message: string };
 
@@ -22,6 +23,7 @@ export function App() {
   // Enrutado temporal: /ui muestra el kit (X2). G5 reemplaza esto con el enrutado real.
   if (window.location.pathname === "/ui") return <UiShowcase />;
   if (window.location.pathname === "/asistente") return <AssistantPreview />;
+  if (window.location.pathname === "/timeline-qa") return <TimelineQa />; // MÓDULO ELIMINABLE
   return <StatusPage />;
 }
 
