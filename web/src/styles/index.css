@@ -299,6 +299,15 @@ body {
   transform: scale(0.98);
 }
 
+/* Lector del buzón (estilo Gmail): entra deslizándose desde la derecha al abrir un correo. */
+@keyframes ci-reader-in {
+  from { opacity: 0; transform: translate3d(18px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.animate-reader {
+  animation: ci-reader-in 320ms var(--ease-out-expo) both;
+}
+
 /* Correo recién llegado: entra deslizándose y destella con el color de su nivel. */
 .animate-arrive {
   animation: ci-slide-in 400ms var(--ease-out-expo) both, ci-flash 900ms ease-out 1;
