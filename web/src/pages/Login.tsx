@@ -33,7 +33,11 @@ export function LoginPage({ onDone }: { onDone: () => void }) {
   const run = async (key: string, fn: () => Promise<void>) => {
     setBusy(key); setError(null);
     try { await fn(); onDone(); }
-    catch (e: unknown) { setError(e instanceof ApiClientError && e.status === 401 ? "Usuario o contraseña incorrectos." : "No pudimos iniciar sesión. Intente de nuevo."); }
+    catch (e: unknown) {
+      if (e instanceof ApiClientError && e.status === 401) setError("Usuario o contraseña incorrectos.");
+      else if (e instanceof ApiClientError && e.status === 429) setError(e.message); // bloqueo temporal por exceso de intentos
+      else setError("No pudimos iniciar sesión. Intente de nuevo.");
+    }
     finally { setBusy(null); }
   };
   const submit = (e: FormEvent) => { e.preventDefault(); void run("form", () => login(username.trim(), password)); };

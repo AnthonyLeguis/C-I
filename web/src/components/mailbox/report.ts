@@ -5,15 +5,17 @@ import { CATEGORY } from "./categories";
 
 const LEVEL: Record<string, string> = { SAFE: "SEGURO", LOW: "BAJO", HIGH: "ALTO", CRITICAL: "CRÍTICO" };
 const FOLDER: Record<string, string> = { INBOX: "Bandeja", SPAM: "Spam", QUARANTINE: "Cuarentena" };
-const esc = (t: string) => t.replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+/** Escapa Markdown en textos que vienen del remitente (asunto, nombre, explicación): sin enlaces, imágenes ni HTML activos. */
+const md = (t: string) => t.replace(/\r?\n/g, " ").replace(/([\\`*_{}[\]()#+!<>|~])/g, "\\$1");
+const esc = md;
 
 export function findingsMarkdown(email: EmailDto, action: string): string {
   const out: string[] = [];
   out.push(`# Informe técnico · C&I`, "");
-  out.push(`**Asunto:** ${email.subject}  `);
-  out.push(`**De:** ${email.from_name ? `${email.from_name} <${email.from_address}>` : email.from_address}  `);
-  if (email.reply_to) out.push(`**Reply-To:** ${email.reply_to}  `);
-  out.push(`**Para:** ${email.recipient}  `);
+  out.push(`**Asunto:** ${md(email.subject)}  `);
+  out.push(`**De:** ${md(email.from_name ? `${email.from_name} <${email.from_address}>` : email.from_address)}  `);
+  if (email.reply_to) out.push(`**Reply-To:** ${md(email.reply_to)}  `);
+  out.push(`**Para:** ${md(email.recipient)}  `);
   out.push(`**Recibido:** ${new Date(email.received_at).toLocaleString("es-VE")}  `);
   out.push(`**Carpeta:** ${FOLDER[email.folder] ?? email.folder} · **Revisión:** ${email.review_status}  `);
   if (email.risk_level) out.push(`**Riesgo:** ${LEVEL[email.risk_level] ?? email.risk_level} · ${email.risk_score ?? "—"}/100`);
@@ -31,7 +33,7 @@ export function findingsMarkdown(email: EmailDto, action: string): string {
     out.push("", "## Fundamento legal", "");
     for (const l of email.legal_basis) out.push(`- **${l.norma}** (${l.referencia}): ${l.relacion}`);
   }
-  if (email.xai_explanation) out.push("", "## Explicación del dictamen", "", `_Origen: ${email.ai_used ? `generada por IA (${email.ai_model ?? "modelo no informado"})` : "análisis determinista por reglas"}._`, "", email.xai_explanation);
+  if (email.xai_explanation) out.push("", "## Explicación del dictamen", "", `_Origen: ${email.ai_used ? `generada por IA (${email.ai_model ?? "modelo no informado"})` : "análisis determinista por reglas"}._`, "", md(email.xai_explanation));
   out.push("", "## Acción recomendada", "", action, "");
   out.push("---", `_Generado por C&I el ${new Date().toLocaleString("es-VE")}. Datos personales protegidos. Orientativo; no constituye asesoría jurídica._`, "");
   return out.join("\n");

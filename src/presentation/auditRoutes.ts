@@ -29,7 +29,7 @@ auditRoutes.get(
 /** G7 · GET /audit/export.csv — bitácora completa en CSV (CISO y Master). */
 const CSV_COLUMNS = ["created_at", "module", "actor", "risk_level", "risk_score", "action_taken", "email_id", "indicators", "pii_detected", "ai_used", "ai_model", "prev_hash", "hash"];
 auditRoutes.get("/export.csv", requireRole("SUPERVISOR") as never, async (c) => {
-  const r = await c.env.DB.prepare(`SELECT ${CSV_COLUMNS.join(", ")} FROM audit_events ORDER BY created_at ASC`).all<Record<string, unknown>>();
+  const r = await c.env.DB.prepare(`SELECT ${CSV_COLUMNS.join(", ")} FROM audit_events ORDER BY rowid ASC`).all<Record<string, unknown>>();
   const stamp = new Date().toISOString().slice(0, 10);
   return new Response(toCsv(r.results ?? [], CSV_COLUMNS), {
     headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="bitacora-ci-${stamp}.csv"`, "cache-control": "no-store" },

@@ -11,21 +11,23 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - name: Calcular avance
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node scripts/timeline-qa/build.mjs > timeline.json
           node scripts/timeline-qa/to-sql.mjs timeline.json > timeline.sql
           node -e "const d=require('./timeline.json');console.log('Equipo',d.team.percent+'%');d.developers.forEach(x=>console.log(x.name,x.percent+'%'))"
+      # El token de Cloudflare solo existe en este paso (no en npm ci ni en el cálculo).
       - name: Guardar en QA y producción
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           for env in qa production; do
             npx wrangler d1 migrations apply DB --remote --env $env

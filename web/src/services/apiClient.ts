@@ -53,7 +53,7 @@ export const api = {
   /** URL directa de descarga (el navegador envía la cookie de sesión). */
   auditCsvUrl: "/api/v1/audit/export.csv",
   dashboard: () => request<DashboardResponse>("/dashboard"),
-  ask: (question: string, emailId: string | null = null) => post<AskResponse>("/assistant/ask", { question, email_id: emailId }),
+  ask: (question: string) => post<AskResponse>("/assistant/ask", { question }),
   timelineQa: () => request<TimelineQaResponse>("/timeline-qa"), // MÓDULO ELIMINABLE
   verifyAudit: () => request<{ chain_ok: boolean; total: number; broken_at: string | null }>("/audit/verify"),
 };

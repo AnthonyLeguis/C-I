@@ -12,14 +12,15 @@ import { parseEmail } from "../infrastructure/emailParser";
 import type { ParsedEmail } from "../infrastructure/emailParser";
 import { WorkersAiGateway } from "../infrastructure/workersAiGateway";
 
+// Límites de tamaño: un correo real cabe de sobra y se evita el abuso de CPU (expresiones regulares) y de IA.
 export const AnalyzeRequest = z.object({
-  from_address: z.string().min(3),
-  from_name: z.string().optional(),
-  reply_to: z.string().optional(),
-  subject: z.string(),
-  body: z.string(),
-  auth_results: z.string().optional(),
-  attachments: z.array(z.string()).default([]),
+  from_address: z.string().min(3).max(320),
+  from_name: z.string().max(200).optional(),
+  reply_to: z.string().max(320).optional(),
+  subject: z.string().max(500),
+  body: z.string().max(20_000),
+  auth_results: z.string().max(2_000).optional(),
+  attachments: z.array(z.string().max(255)).max(25).default([]),
 });
 
 export const mailRoutes = new Hono<AppEnv>();
@@ -41,8 +42,10 @@ mailRoutes.post("/analyze", requireRole("ANALYST") as never, async (c) => {
   }
 
   const db = c.env.DB;
+  // ?persist=false: analizar sin guardar el correo en el buzón (lo usa la prueba de humo de producción).
+  const persist = c.req.query("persist") !== "false";
   let persistEmail: EmailPersistencePort | undefined;
-  if (db !== undefined) {
+  if (db !== undefined && persist) {
     persistEmail = {
       save: async (record) => {
         await emailRepository.insert(db, record);

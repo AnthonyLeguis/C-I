@@ -26,6 +26,8 @@ export function MailDetail({ email, role, onReview, onAction }: { email: EmailDt
   const blurred = isQuarantine && !reveal;
   const isCiso = role !== "ANALYST";
   const canDecide = isCiso && (email.review_status === "PENDING" || email.review_status === "ESCALATED" || isQuarantine);
+  // Liberar un correo en cuarentena o en revisión es decisión del CISO o del Master (la API aplica la misma regla).
+  const canApprove = isCiso || (!isQuarantine && email.review_status !== "PENDING" && email.review_status !== "ESCALATED");
   const risky = email.risk_level === "HIGH" || email.risk_level === "CRITICAL";
   // peso 0 = correos guardados antes de conservar el peso: igual son hallazgos (sin etiqueta de puntos)
   const findings = email.indicators.filter((i) => (i.weight ?? 1) >= 0);
@@ -127,7 +129,7 @@ export function MailDetail({ email, role, onReview, onAction }: { email: EmailDt
             <Eyebrow className="mb-1">Decisión</Eyebrow>
             {canDecide && <Button block variant="danger" icon={<ShieldCheck size={16} />} onClick={() => onReview("CONFIRM")}>Confirmar amenaza</Button>}
             {canDecide && <Button block variant="success" icon={<Undo2 size={16} />} onClick={() => onReview("RESTORE")}>Restaurar a bandeja</Button>}
-            <Button block variant="success" icon={<CheckCircle2 size={16} />} onClick={() => onAction("approve")} disabled={email.folder === "INBOX" && email.review_status !== "PENDING"}>Aprobar / Marcar seguro</Button>
+            {canApprove && <Button block variant="success" icon={<CheckCircle2 size={16} />} onClick={() => onAction("approve")} disabled={email.folder === "INBOX" && email.review_status !== "PENDING"}>Aprobar / Marcar seguro</Button>}
             <Button block variant="warning" icon={<ArrowUpRight size={16} />} onClick={() => onAction("escalate")} disabled={email.review_status === "ESCALATED"}>Escalar a CISO</Button>
             {isCiso && <Button block variant="danger" icon={<Ban size={16} />} onClick={() => onAction("block")} disabled={!risky}>Bloquear dominio</Button>}
             <Button block variant="navy" icon={<ScanSearch size={16} />} onClick={() => navigate("analizar")}>Abrir en Analizador</Button>

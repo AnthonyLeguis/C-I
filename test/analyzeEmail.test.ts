@@ -80,7 +80,8 @@ describe("caso de uso analyzeEmail (W4)", () => {
     });
 
     expect(analyzeHeuristics(PHISHING).score).toBe(100);
-    expect(result.risk_score).toBe(97);
+    // reglas 100 · fusión 100×0,7 + 90×0,3 = 97 · la IA solo puede subir el riesgo → max(100, 97) = 100
+    expect(result.risk_score).toBe(100);
     expect(result.risk_level).toBe("CRITICAL");
     expect(result.action_taken).toBe("QUARANTINE");
     expect(result.human_review_required).toBe(true);
