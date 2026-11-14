@@ -65,9 +65,9 @@ export function SupportPage() {
           desc={<>Latencia: <span className="font-mono">{status.database.latency_ms} ms</span> · {status.database.emails} correos · {status.database.events} eventos</>}
           right={<Pill ok={status.database.ok}>OPERATIVO</Pill>} />
         <Row icon={<Mail size={18} />} title="Ingesta de correo" desc={status.mail_ingestion.source} right={<Pill ok={status.mail_ingestion.ok}>CONECTADO</Pill>} />
-        <Row icon={<RotateCcw size={18} />} title="Restablecer entorno de demostración" desc="Borra correos, bitácora y bloqueos, y vuelve a cargar los 6 escenarios de demo."
+        <Row icon={<RotateCcw size={18} />} title="Restablecer entorno de demostración" desc="Vacía el buzón y los bloqueos y vuelve a cargar los 6 escenarios de demo. La bitácora se conserva (es inmutable)."
           right={!isAdmin ? <OnlyFor who="Master" /> : <Button size="sm" variant="danger" loading={busy === "reset"}
-            onClick={() => { if (window.confirm("¿Restablecer la demo? Se borrarán correos, bitácora y dominios bloqueados.")) void run("reset", async () => `Demo restablecida · ${(await api.resetDemo(true)).loaded} correos cargados`); }}>Restablecer datos</Button>} />
+            onClick={() => { if (window.confirm("¿Restablecer la demo? Se vaciarán el buzón y los dominios bloqueados (la bitácora se conserva).")) void run("reset", async () => `Demo restablecida · ${(await api.resetDemo(true)).loaded} correos cargados`); }}>Restablecer datos</Button>} />
       </Card>
 
       <Card>

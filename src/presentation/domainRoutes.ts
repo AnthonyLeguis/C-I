@@ -7,7 +7,7 @@ import { getCurrentUser, requireRole } from "../infrastructure/auth";
 import { AuditRepository } from "../infrastructure/d1Repos";
 import { domainStoreFor } from "../infrastructure/domainStore";
 
-const BlockRequest = z.object({ domain: z.string().min(3).max(253), reason: z.string().max(300).optional(), email_id: z.string().optional() });
+const BlockRequest = z.object({ domain: z.string().min(3).max(253), reason: z.string().max(300).optional(), email_id: z.string().uuid().optional() });
 
 export const domainRoutes = new Hono<AppEnv>();
 

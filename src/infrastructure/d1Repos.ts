@@ -100,8 +100,8 @@ function rowToEmailRecord(row: EmailRow): EmailRecord {
     folder: row.folder as Folder,
     riskLevel: row.risk_level as RiskLevel | null,
     riskScore: row.risk_score,
-    indicators: JSON.parse(row.indicators) as unknown[],
-    legalBasis: JSON.parse(row.legal_basis) as unknown[],
+    indicators: safeJson<unknown[]>(row.indicators, []),
+    legalBasis: safeJson<unknown[]>(row.legal_basis, []),
     xaiExplanation: row.xai_explanation,
     reviewStatus: row.review_status as ReviewStatus,
   };
@@ -198,9 +198,19 @@ export class AuditRepository implements AuditRepositoryPort {
    * hash = SHA256(prev_hash + JSON.stringify(eventData))
    */
   async append(event: AuditEventInput): Promise<{ id: string; hash: string }> {
-    // 1. Obtener el hash del último registro global
+    // Concurrencia optimista: si otro evento se registró entre la lectura del último hash y la inserción,
+    // la inserción condicional no ocurre y se reintenta con el nuevo último hash (la cadena nunca se bifurca).
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const r = await this.tryAppend(event);
+      if (r) return r;
+    }
+    throw new Error("No se pudo registrar el evento en la bitácora (concurrencia).");
+  }
+
+  private async tryAppend(event: AuditEventInput): Promise<{ id: string; hash: string } | null> {
+    // 1. Obtener el hash del último registro global (orden de inserción: rowid, sin empates de milisegundos)
     const lastRow = await this.db
-      .prepare(`SELECT hash FROM audit_events ORDER BY created_at DESC LIMIT 1`)
+      .prepare(`SELECT hash FROM audit_events ORDER BY rowid DESC LIMIT 1`)
       .first<Pick<AuditRow, "hash">>();
     const prevHash = lastRow?.hash ?? GENESIS_HASH;
 
@@ -221,15 +231,16 @@ export class AuditRepository implements AuditRepositoryPort {
     };
     const hash = await sha256(prevHash + JSON.stringify(dataForHash));
 
-    // 3. Insertar el registro con el hash calculado
+    // 3. Insertar el registro solo si el último hash sigue siendo prevHash (sentencia atómica en SQLite)
     const id = crypto.randomUUID();
-    await this.db
+    const res = await this.db
       .prepare(
         `INSERT INTO audit_events
           (id, module, email_id, actor, risk_level, risk_score,
            action_taken, indicators, legal_basis, pii_detected,
            xai_explanation, ai_used, ai_model, prev_hash, hash)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+         WHERE COALESCE((SELECT hash FROM audit_events ORDER BY rowid DESC LIMIT 1), ?) = ?`
       )
       .bind(
         id,
@@ -246,11 +257,13 @@ export class AuditRepository implements AuditRepositoryPort {
         event.aiUsed ? 1 : 0,
         event.aiModel,
         prevHash,
-        hash
+        hash,
+        GENESIS_HASH,
+        prevHash
       )
       .run();
 
-    return { id, hash };
+    return (res.meta?.changes ?? 1) > 0 ? { id, hash } : null;
   }
 
   /**
@@ -264,7 +277,7 @@ export class AuditRepository implements AuditRepositoryPort {
                 action_taken, indicators, legal_basis, pii_detected,
                 xai_explanation, ai_used, ai_model, prev_hash, hash
          FROM audit_events
-         ORDER BY created_at ASC`
+         ORDER BY rowid ASC`
       )
       .all<AuditRow>();
 
@@ -283,9 +296,9 @@ export class AuditRepository implements AuditRepositoryPort {
         riskLevel: row.risk_level,
         riskScore: row.risk_score,
         actionTaken: row.action_taken,
-        indicators: JSON.parse(row.indicators) as string[],
-        legalBasis: JSON.parse(row.legal_basis) as unknown[],
-        piiDetected: JSON.parse(row.pii_detected) as string[],
+        indicators: safeJson<string[]>(row.indicators, []),
+        legalBasis: safeJson<unknown[]>(row.legal_basis, []),
+        piiDetected: safeJson<string[]>(row.pii_detected, []),
         xaiExplanation: row.xai_explanation,
         aiUsed: row.ai_used === 1,
         aiModel: row.ai_model,
@@ -308,6 +321,12 @@ export class AuditRepository implements AuditRepositoryPort {
 
 /** Instancia singleton de EmailRepository (stateless). */
 export const emailRepository = new EmailRepository();
+
+/** JSON.parse que no tumba un listado completo por una fila dañada. */
+function safeJson<T>(raw: string | null | undefined, fallback: T): T {
+  if (raw === null || raw === undefined) return fallback;
+  try { return JSON.parse(raw) as T; } catch { return fallback; }
+}
 
 /**
  * Origen de la explicación de cada correo (IA o reglas), leído del análisis MAIL_ANALYZER de la bitácora.

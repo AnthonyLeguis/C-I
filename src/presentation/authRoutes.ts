@@ -13,14 +13,18 @@ import {
   signSession,
   quickLoginUser,
 } from "../infrastructure/auth";
+import { allowRequest, clientIp } from "./security";
+
+/** Los perfiles de demostración solo existen si el entorno lo declara explícitamente (DEMO_MODE="true"). */
+export const demoModeOn = (env: { DEMO_MODE?: string } | undefined) => env?.DEMO_MODE === "true";
 
 export const LoginRequest = z.object({
-  username: z.string().min(1, "El usuario es requerido"),
-  password: z.string().min(1, "La contraseña es requerida"),
+  username: z.string().min(1, "El usuario es requerido").max(64),
+  password: z.string().min(1, "La contraseña es requerida").max(256),
 });
 
 export const QuickLoginRequest = z.object({
-  username: z.string().min(1, "El usuario es requerido"),
+  username: z.string().min(1, "El usuario es requerido").max(64),
 });
 
 export const authRoutes = new Hono<AppEnv>();
@@ -43,6 +47,11 @@ authRoutes.post("/login", async (c) => {
   }
 
   const { username, password } = parsed.data;
+  // Bloqueo por fuerza bruta: máximo 8 intentos por usuario e IP cada 15 minutos.
+  if (!(await allowRequest(c.env?.DB, `login-user:${clientIp(c)}:${username.trim().toLowerCase()}`, 8, 15 * 60))) {
+    c.header("Retry-After", "900");
+    return c.json({ error: "Demasiados intentos. Espere unos minutos e intente de nuevo." }, 429);
+  }
   const user = await authenticateUser(c, username, password);
   if (!user) {
     return c.json({ error: "Usuario o contraseña inválidos." }, 401);
@@ -59,6 +68,7 @@ authRoutes.post("/login", async (c) => {
  *  Recibe { "username": "jrios" } y emite la misma cookie de sesión sin contraseña.
  *  Solo disponible en el prototipo de demo. */
 authRoutes.post("/quick-login", async (c) => {
+  if (!demoModeOn(c.env)) return c.json({ error: "Ruta no encontrada." }, 404);
   const body = await c.req.json().catch(() => null);
   const parsed = QuickLoginRequest.safeParse(body);
   if (!parsed.success) {
@@ -76,7 +86,7 @@ authRoutes.post("/quick-login", async (c) => {
   if (!user) {
     return c.json(
       {
-        error: "Usuario no válido para quick-login. Use: jrios, svalenzuela o cmendoza.",
+        error: "Perfil de demostración no válido.",
       },
       401
     );
@@ -104,6 +114,7 @@ authRoutes.get("/me", async (c) => {
 
 // Exportar lista de usuarios demo para la UI de login (PLAN_UX §5.2)
 authRoutes.get("/demo-users", (c) => {
+  if (!demoModeOn(c.env)) return c.json({ users: [] });
   const users = Object.values(DEMO_USERS).map(({ user }) => ({
     username: user.username,
     display_name: user.display_name,

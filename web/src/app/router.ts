@@ -1,11 +1,11 @@
 // Enrutado mínimo por ruta (sin librerías) — PR G5.
 import { useEffect, useState } from "react";
 
-export type RouteKey = "login" | "panel" | "buzon" | "analizar" | "asistente" | "bitacora" | "soporte" | "mapa" | "ui" | "timeline-qa";
+export type RouteKey = "login" | "panel" | "buzon" | "analizar" | "asistente" | "bitacora" | "soporte" | "timeline-qa";
 
 const PATHS: Record<RouteKey, string> = {
   login: "/login", panel: "/panel", buzon: "/buzon", analizar: "/analizar", asistente: "/asistente",
-  bitacora: "/bitacora", soporte: "/soporte", mapa: "/mapa", ui: "/ui", "timeline-qa": "/timeline-qa",
+  bitacora: "/bitacora", soporte: "/soporte", "timeline-qa": "/timeline-qa",
 };
 
 export function routeFromPath(path: string): RouteKey | null {

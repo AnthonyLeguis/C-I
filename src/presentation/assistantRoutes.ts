@@ -11,7 +11,6 @@ import { AuditRepository } from "../infrastructure/d1Repos";
 
 const AskRequest = z.object({
   question: z.string().trim().min(1).max(4000),
-  email_id: z.string().nullable().optional(),
 });
 
 export const assistantRoutes = new Hono<AppEnv>();

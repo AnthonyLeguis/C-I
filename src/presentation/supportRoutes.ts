@@ -51,12 +51,15 @@ supportRoutes.post("/mode", async (c) => {
 });
 
 supportRoutes.post("/reset-demo", async (c) => {
+  if (c.env?.DEMO_MODE !== "true") return c.json({ error: "Ruta no encontrada." }, 404);
   const parsed = ResetRequest.safeParse(await c.req.json().catch(() => ({})));
   const withSamples = parsed.success ? parsed.data.with_samples : true;
   const db = c.env.DB;
   const user = await getCurrentUser(c as never);
   const actor = user?.display_name ?? "desconocido";
-  await db.batch([db.prepare("DELETE FROM emails"), db.prepare("DELETE FROM audit_events"), db.prepare("DELETE FROM blocked_domains")]);
+  // La bitácora es inmutable: el restablecimiento limpia el buzón y los bloqueos, pero conserva la cadena de
+  // auditoría y deja constancia del restablecimiento como un evento más.
+  await db.batch([db.prepare("DELETE FROM emails"), db.prepare("DELETE FROM blocked_domains")]);
   const audit = new AuditRepository(db);
   await audit.append({
     module: "REVIEW", emailId: null, actor, riskLevel: null, riskScore: null, actionTaken: "DEMO_RESET",

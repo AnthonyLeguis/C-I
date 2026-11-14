@@ -41,19 +41,19 @@ function makeMockD1(rows: MockAuditRow[] = []): D1Database {
       bind: (...args: unknown[]) => makeStmt(sql, args),
       first: async <T>(): Promise<T | null> => {
         const up = sql.trim().toUpperCase();
-        if (up.startsWith("SELECT") && up.includes("ORDER BY CREATED_AT DESC LIMIT 1")) {
+        if (up.startsWith("SELECT") && up.includes("ORDER BY ROWID DESC LIMIT 1")) {
           if (store.length === 0) return null;
           const last = store[store.length - 1];
           return last as T;
         }
-        if (up.startsWith("SELECT") && up.includes("ORDER BY CREATED_AT ASC")) {
+        if (up.startsWith("SELECT") && up.includes("ORDER BY ROWID ASC")) {
           return null; // first() no se usa en ese query
         }
         return null;
       },
       all: async <T>(): Promise<D1Result<T>> => {
         const up = sql.trim().toUpperCase();
-        if (up.startsWith("SELECT") && up.includes("ORDER BY CREATED_AT ASC")) {
+        if (up.startsWith("SELECT") && up.includes("ORDER BY ROWID ASC")) {
           return { results: [...store] as unknown as T[], success: true, meta: {} as unknown as D1Meta & Record<string, unknown> };
         }
         return { results: [] as T[], success: true, meta: {} as unknown as D1Meta & Record<string, unknown> };
@@ -63,8 +63,12 @@ function makeMockD1(rows: MockAuditRow[] = []): D1Database {
         if (up.startsWith("INSERT INTO AUDIT_EVENTS")) {
           // params: id, module, email_id, actor, risk_level, risk_score,
           //         action_taken, indicators, legal_basis, pii_detected,
-          //         xai_explanation, ai_used, ai_model, prev_hash, hash
+          //         xai_explanation, ai_used, ai_model, prev_hash, hash, genesis, expectedPrev
           const p = params as (string | number | null)[];
+          const tail = store.length === 0 ? p[15] : store[store.length - 1]!.hash;
+          if (tail !== p[16]) {
+            return { results: [] as unknown[], success: true, meta: { changes: 0 } as unknown as D1Meta & Record<string, unknown> };
+          }
           store.push({
             id: p[0] as string,
             module: p[1] as string,
@@ -83,6 +87,7 @@ function makeMockD1(rows: MockAuditRow[] = []): D1Database {
             hash: p[14] as string,
             created_at: nextTs(),
           });
+          return { results: [] as unknown[], success: true, meta: { changes: 1 } as unknown as D1Meta & Record<string, unknown> };
         }
         return { results: [] as unknown[], success: true, meta: {} as unknown as D1Meta & Record<string, unknown> };
       },
@@ -244,5 +249,15 @@ describe("G2 — AuditRepository (hash encadenado)", () => {
     expect(result.total).toBe(2);
     // broken_at debe ser el id del primer registro adulterado
     expect(result.broken_at).toBe(r1.id);
+  });
+});
+
+describe("AuditRepository — concurrencia (auditoría de seguridad QA)", () => {
+  it("registros simultáneos no bifurcan la cadena: la inserción condicional reintenta", async () => {
+    const repo = new AuditRepository(makeMockD1());
+    await Promise.all([repo.append(makeEvent("a")), repo.append(makeEvent("b")), repo.append(makeEvent("c"))]);
+    const result = await repo.verifyChain();
+    expect(result.chain_ok).toBe(true);
+    expect(result.total).toBe(3);
   });
 });
