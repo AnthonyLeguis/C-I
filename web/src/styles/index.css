@@ -216,3 +216,84 @@ body {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* ───────────── Utilidades de movimiento (PR X2 · PLAN_UX §1.1) ───────────── */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Entrada: fundido + subida corta. Para listas, usar `style={{ animationDelay }}` (ver <Stagger>). */
+@keyframes ci-enter {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.animate-enter {
+  animation: ci-enter 260ms var(--ease-out-expo) both;
+}
+.animate-page {
+  animation: ci-enter 220ms var(--ease-out-expo) both;
+}
+
+/* Correo nuevo en el buzón: entra deslizándose desde la izquierda. */
+@keyframes ci-slide-in {
+  from { opacity: 0; transform: translate3d(-16px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.animate-slide-in {
+  animation: ci-slide-in 400ms var(--ease-out-expo) both;
+}
+
+/* Destello del color del nivel (se usa junto a animate-slide-in). */
+@keyframes ci-flash {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--flash-color, var(--brand)) 55%, transparent); }
+  100% { box-shadow: 0 0 0 10px transparent; }
+}
+.animate-flash {
+  animation: ci-flash 900ms ease-out 1;
+}
+
+/* Toasts: entran desde abajo. */
+@keyframes ci-toast-in {
+  from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.98); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+.animate-toast {
+  animation: ci-toast-in 250ms var(--ease-out-expo) both;
+}
+
+/* Skeleton con brillo que recorre. */
+@keyframes ci-shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+  border-radius: var(--radius-control);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--surface) 70%, transparent), transparent);
+  animation: ci-shimmer 1.2s ease-in-out infinite;
+}
+
+/* Elevación al pasar el mouse (tarjetas y filas interactivas). */
+.lift {
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+.lift:hover {
+  transform: translate3d(0, -1px, 0);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08), var(--shadow-card-raw);
+}
+
+/* Presión de botones. */
+.press {
+  transition: transform 120ms ease, background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.press:active:not(:disabled) {
+  transform: scale(0.98);
+}
