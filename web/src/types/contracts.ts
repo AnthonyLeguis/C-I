@@ -39,6 +39,8 @@ export interface AnalyzeResponse {
   human_review_required: boolean;
 }
 
+export interface EmailIndicatorDto { category: IndicatorCategory; text: string; weight?: number }
+
 export interface EmailDto {
   id: string;
   recipient: string;
@@ -51,10 +53,17 @@ export interface EmailDto {
   folder: Folder;
   risk_level: RiskLevel | null;
   risk_score: number | null;
+  indicators: EmailIndicatorDto[];
+  legal_basis: LegalBasis[];
+  xai_explanation: string | null;
   review_status: ReviewStatus;
 }
 
-export interface MailboxResponse { folder: Folder; counts: Record<Folder, number>; emails: EmailDto[] }
+export type MailboxView = Folder | "ALL" | "PENDING";
+export interface MailboxResponse { folder: MailboxView; counts: Record<Folder, number>; total: number; pending: number; emails: EmailDto[] }
+export interface DemoScenarioDto { id: string; label: string }
+export interface DeliverResponse { email_id: string; audit_hash: string }
+export interface DemoUser { username: string; display_name: string; role: Role }
 export interface ReviewResponse { email_id: string; review_status: ReviewStatus; folder: Folder; audit_hash: string }
 
 export interface AskResponse {

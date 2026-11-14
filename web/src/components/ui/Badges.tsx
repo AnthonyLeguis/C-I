@@ -6,7 +6,7 @@ import { ESCALATED, FOLDER, REVIEW, RISK, type VisualSpec } from "./levels";
 function Badge({ spec, text, pulse = false }: { spec: VisualSpec; text?: string; pulse?: boolean }) {
   const Icon = spec.icon;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-badge border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${spec.tone}`}>
+    <span className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-badge border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${spec.tone}`}>
       {pulse ? <span className="h-1.5 w-1.5 rounded-full bg-current animate-ci-pulse" aria-hidden /> : <Icon size={13} aria-hidden />}
       {text ?? spec.label}
     </span>
