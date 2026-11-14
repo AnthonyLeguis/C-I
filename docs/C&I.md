@@ -876,7 +876,7 @@ Actúa como Ingeniero Principal de QA de C&I.
 
 ### 10.8 Estado verificado del PC de Anthony (12/11/2026)
 
-Node v24.18 ✅ · Git 2.55 ✅ · gh 2.96 con sesión iniciada (permisos `repo` y `workflow`) ✅ · Docker 29.8 + Compose 5.5 con el motor funcionando e imagen `node:22-bookworm-slim` en caché ✅ · Cloudflare con sesión iniciada (`anthony-leguisamo-g.workers.dev`) y prueba de Worker + D1 + Workers AI correcta ✅ · Modelos verificados: GLM-4.7 Flash, Llama 3.3 70B fast, Llama Guard 3 ✅; Llama 3.1 8B **retirado** ❌ · Un subdominio nuevo tarda ~1 min en tener SSL.
+Node v24.18 ✅ · Git 2.55 ✅ · gh 2.96 con sesión iniciada (permisos `repo` y `workflow`) ✅ · Docker 29.8 + Compose 5.5 con el motor funcionando e imagen `node:22-bookworm-slim` en caché ✅ · Cloudflare con sesión iniciada (`equipo-ci.workers.dev`) y prueba de Worker + D1 + Workers AI correcta ✅ · Modelos verificados: GLM-4.7 Flash, Llama 3.3 70B fast, Llama Guard 3 ✅; Llama 3.1 8B **retirado** ❌ · Un subdominio nuevo tarda ~1 min en tener SSL.
 
 ### 10.9 Checklist final (antes de las 12:30 del sábado)
 

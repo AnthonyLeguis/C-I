@@ -231,5 +231,5 @@ Cuando Anthony te confirme el merge, vuelve al **Paso 1** con el siguiente punto
 | Repositorio | https://github.com/AnthonyLeguis/C-I |
 | Tus PR y su estado | https://github.com/AnthonyLeguis/C-I/pulls |
 | QA automático (Actions) | https://github.com/AnthonyLeguis/C-I/actions |
-| Entorno QA (integración de todos) | https://c-i-qa.anthony-leguisamo-g.workers.dev |
-| Producción (jurado) | https://c-i.anthony-leguisamo-g.workers.dev |
+| Entorno QA (integración de todos) | https://c-i-qa.equipo-ci.workers.dev |
+| Producción (jurado) | https://c-i.equipo-ci.workers.dev |
