@@ -6,16 +6,16 @@ import { BadgeSamples, ButtonSamples, KpiSamples, MeterSamples, StateSamples } f
 export function UiShowcase() {
   const [active, setActive] = useState<NavKey>("panel");
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <ToastProvider>
       <div className="flex min-h-screen">
-        <Sidebar active={active} role="ADMIN" userName="Carlos Mendoza" pendingCount={5} open={open} onClose={() => setOpen(false)} onNavigate={setActive} onLogout={() => undefined} />
+        <Sidebar active={active} role="ADMIN" pendingCount={5} open={open} collapsed={collapsed} onToggleCollapsed={() => setCollapsed((c) => !c)} onClose={() => setOpen(false)} onNavigate={setActive} />
         <div className="min-w-0 flex-1">
           <Topbar
             title="Kit de componentes C&I"
             subtitle="X2 · tokens, badges, medidor, KPI, estados, avisos y movimiento"
-            aiStatus="ONLINE"
             user={{ display_name: "Carlos Mendoza", role: "ADMIN" }}
             onMenu={() => setOpen(true)}
           />

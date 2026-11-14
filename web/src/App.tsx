@@ -3,7 +3,7 @@ import { useEffect, type ReactNode } from "react";
 import { navigate, routeFromPath, usePath } from "./app/router";
 import { AppShell } from "./components/layout/AppShell";
 import { PendingScreen } from "./components/layout/PendingScreen";
-import { ForbiddenState, SkeletonCard, ToastProvider } from "./components/ui";
+import { CyberBackground, SkeletonCard, ToastProvider } from "./components/ui";
 import { SessionProvider, useSession } from "./hooks/useSession";
 import { AnalyzerPage } from "./pages/Analyzer";
 import { AssistantPage } from "./pages/Assistant";
@@ -20,6 +20,7 @@ export function App() {
   return (
     <SessionProvider>
       <ToastProvider>
+        <CyberBackground />
         <Routes />
       </ToastProvider>
     </SessionProvider>
@@ -47,7 +48,7 @@ function Routes() {
       {route === "panel" && <DashboardPage />}
       {route === "analizar" && <AnalyzerPage />}
       {route === "bitacora" && <AuditLogPage />}
-      {route === "soporte" && (user.role === "ADMIN" ? <SupportPage /> : <ForbiddenState />)}
+      {route === "soporte" && <SupportPage />}
     </AppShell>
   );
 }

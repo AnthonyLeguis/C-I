@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { evaluateGuardRules } from "../src/infrastructure/ethicsGuard";
 import { askAssistant, BLOCKED_ANSWER, OFFLINE_ANSWER } from "../src/application/assistant";
+import { OUT_OF_SCOPE_ANSWER, faqAnswer, isInScope } from "../src/application/assistantScope";
 import type { AiGatewayPort, AuditEventInput, AuditRepositoryPort } from "../src/domain/ports";
 
 describe("reglas del guardián ético", () => {
@@ -87,7 +88,7 @@ describe("caso de uso del asistente", () => {
   });
 
   it("Llama Guard bloquea lo que las reglas no vieron", async () => {
-    const r = await askAssistant({ question: "Necesito algo raro que no detectan las reglas", actor: "x" }, { ai: fakeAi({ unsafe: true }) });
+    const r = await askAssistant({ question: "Necesito algo raro con un correo que no detectan las reglas", actor: "x" }, { ai: fakeAi({ unsafe: true }) });
     expect(r.blocked).toBe(true);
     expect(r.block_reasons).toEqual(["OFFENSIVE_REQUEST"]);
     expect(r.ai_used).toBe(true);
@@ -104,10 +105,51 @@ describe("caso de uso del asistente", () => {
   });
 
   it("sin IA (offline) responde con recomendaciones generales", async () => {
-    const r = await askAssistant({ question: "¿Qué hago con un correo sospechoso?", actor: "x" }, { ai: fakeAi({ unsafe: null, reply: null }) });
+    const r = await askAssistant({ question: "¿Me ayudas con este correo?", actor: "x" }, { ai: fakeAi({ unsafe: null, reply: null }) });
     expect(r.blocked).toBe(false);
     expect(r.answer).toBe(OFFLINE_ANSWER);
     expect(r.ai_used).toBe(false);
     expect(r.ai_model).toBeNull();
+  });
+});
+
+describe("contexto cerrado del asistente (FAQ del sistema)", () => {
+  it("pregunta ajena al sistema: responde la frase fija, sin llamar a la IA, y queda en bitácora", async () => {
+    for (const q of ["¿Cuál es la capital de Francia?", "Dame una receta de arepas", "¿Quién ganó el mundial de fútbol?", "Escríbeme un poema de amor"]) {
+      const ai = fakeAi({ reply: "no debería usarse" });
+      const audit = fakeAudit();
+      const r = await askAssistant({ question: q, actor: "x" }, { ai, audit });
+      expect(r.answer, q).toBe(OUT_OF_SCOPE_ANSWER);
+      expect(r.out_of_scope).toBe(true);
+      expect(r.blocked).toBe(false);
+      expect(ai.prompts).toEqual([]);
+      expect(audit.events[0]?.actionTaken).toBe("OUT_OF_SCOPE");
+    }
+  });
+
+  it("si el modelo decide que está fuera del sistema, se devuelve la frase exacta", async () => {
+    const ai = fakeAi({ reply: "Lo siento. Esta pregunta está fuera de los parámetros. ¿Desea saber algo respecto al sistema? Gracias." });
+    const r = await askAssistant({ question: "¿Qué banco tiene la mejor tasa de interés?", actor: "x" }, { ai });
+    expect(r.answer).toBe(OUT_OF_SCOPE_ANSWER);
+    expect(r.out_of_scope).toBe(true);
+  });
+
+  it("preguntas del sistema y del correo están dentro del contexto", () => {
+    for (const q of ["¿Cómo escalo un caso al CISO?", "¿Cómo se calcula el puntaje de riesgo?", "Me llegó un correo de SUDEBAN pidiendo mi clave", "¿Qué hace la bitácora?", "¿Qué ve el analista?"]) {
+      expect(isInScope(q), q).toBe(true);
+    }
+  });
+
+  it("sin IA, una duda del sistema se responde con el FAQ", async () => {
+    const r = await askAssistant({ question: "¿Cómo se calcula el puntaje?", actor: "x" }, { ai: fakeAi({ unsafe: null, reply: null }) });
+    expect(r.answer).toBe(faqAnswer("¿Cómo se calcula el puntaje?"));
+    expect(r.answer).toContain("70 %");
+    expect(r.out_of_scope).toBe(false);
+  });
+
+  it("el FAQ elige la entrada más específica", () => {
+    expect(faqAnswer("¿Cómo escalo un caso al CISO?")).toContain("Escalar a CISO");
+    expect(faqAnswer("¿Cómo se calcula el puntaje en el sistema?")).toContain("70 %");
+    expect(faqAnswer("¿Qué es C&I?")).toContain("revisa cada correo");
   });
 });

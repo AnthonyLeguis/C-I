@@ -175,7 +175,8 @@ html {
 }
 
 body {
-  background: var(--page);
+  /* transparente: deja ver el fondo vivo (CyberBackground, z-index negativo); el color base va en <html> */
+  background: transparent;
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -298,6 +299,15 @@ body {
   transform: scale(0.98);
 }
 
+/* Lector del buzón (estilo Gmail): entra deslizándose desde la derecha al abrir un correo. */
+@keyframes ci-reader-in {
+  from { opacity: 0; transform: translate3d(18px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.animate-reader {
+  animation: ci-reader-in 320ms var(--ease-out-expo) both;
+}
+
 /* Correo recién llegado: entra deslizándose y destella con el color de su nivel. */
 .animate-arrive {
   animation: ci-slide-in 400ms var(--ease-out-expo) both, ci-flash 900ms ease-out 1;
@@ -315,3 +325,107 @@ body {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
+
+/* ───────────── Fondo vivo de ciberseguridad (CyberBackground) y vidrio ─────────────
+   Tokens por tema: el fondo es pasivo y casi transparente para no competir con los datos. */
+:root,
+:root[data-theme="light"] {
+  --logo-ink: #0b2545;
+  --logo-accent: #00a8e8;
+  --bg-grad: radial-gradient(ellipse at 8% 0%, rgba(0, 168, 232, 0.12), transparent 55%),
+    radial-gradient(ellipse at 92% 100%, rgba(0, 133, 66, 0.1), transparent 55%),
+    linear-gradient(150deg, #e6efe9 0%, #eef5f1 55%, #e2ece7 100%);
+  --bg-orb-a: radial-gradient(circle at 40% 40%, rgba(0, 168, 232, 0.16), transparent 70%);
+  --bg-orb-b: radial-gradient(circle at 50% 45%, rgba(19, 64, 116, 0.12), transparent 70%);
+  --bg-orb-c: radial-gradient(circle at 50% 50%, rgba(0, 133, 66, 0.12), transparent 72%);
+  --bg-dots: rgba(11, 37, 69, 0.09);
+  --bg-net: #134074;
+  --bg-net-op: 0.14;
+  --bg-node-a: #00a8e8;
+  --bg-node-b: #134074;
+  --bg-node-op: 0.32;
+  --bg-packet: #00a8e8;
+  --bg-packet-op: 0.45;
+  --bg-glyph-op: 0.08;
+  --bg-hex-op: 0.1;
+  --bg-scan: rgba(0, 168, 232, 0.05);
+  --bg-vign: radial-gradient(circle at center, transparent 50%, rgba(11, 37, 69, 0.05) 100%);
+  --glass: rgba(244, 250, 246, 0.72);
+  --glass-strong: rgba(244, 250, 246, 0.9);
+}
+:root[data-theme="dark"] {
+  --logo-ink: #e8eef6;
+  --logo-accent: #00a8e8;
+  --bg-grad: radial-gradient(ellipse at 8% 0%, rgba(0, 168, 232, 0.11), transparent 55%),
+    radial-gradient(ellipse at 92% 100%, rgba(19, 64, 116, 0.35), transparent 60%),
+    linear-gradient(150deg, #020617 0%, #06112a 55%, #020617 100%);
+  --bg-orb-a: radial-gradient(circle at 40% 40%, rgba(0, 168, 232, 0.14), transparent 70%);
+  --bg-orb-b: radial-gradient(circle at 50% 45%, rgba(19, 64, 116, 0.4), transparent 70%);
+  --bg-orb-c: radial-gradient(circle at 50% 50%, rgba(0, 176, 80, 0.08), transparent 72%);
+  --bg-dots: rgba(148, 163, 184, 0.07);
+  --bg-net: #38bdf8;
+  --bg-net-op: 0.09;
+  --bg-node-a: #00a8e8;
+  --bg-node-b: #94a3b8;
+  --bg-node-op: 0.26;
+  --bg-packet: #22d3ee;
+  --bg-packet-op: 0.55;
+  --bg-glyph-op: 0.06;
+  --bg-hex-op: 0.09;
+  --bg-scan: rgba(0, 168, 232, 0.045);
+  --bg-vign: radial-gradient(circle at center, transparent 45%, rgba(0, 0, 0, 0.35) 100%);
+  --glass: rgba(15, 23, 42, 0.6);
+  --glass-strong: rgba(15, 23, 42, 0.86);
+}
+
+@keyframes cy-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -20px, 0); }
+}
+.cy-float { animation: cy-float 12s ease-in-out infinite; }
+.cy-float-2 { animation: cy-float 12s ease-in-out infinite -6s; }
+
+@keyframes cy-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.03); }
+  50% { transform: translate3d(-1.2%, -0.8%, 0) scale(1.06); }
+}
+@keyframes cy-in { from { opacity: 0; } to { opacity: 1; } }
+.cy-drift { transform-origin: center; animation: cy-in 1.4s ease-out both, cy-drift 34s ease-in-out infinite; }
+
+@keyframes cy-node-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+.cy-node-pulse { animation: cy-node-pulse 4.5s ease-in-out infinite; }
+
+@keyframes cy-scan {
+  0% { transform: translate3d(0, -12rem, 0); }
+  100% { transform: translate3d(0, 110vh, 0); }
+}
+.cy-scan { top: 0; animation: cy-scan 14s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cy-float, .cy-float-2, .cy-drift, .cy-node-pulse, .cy-scan { animation: none !important; }
+  .cy-scan, .cy-packets { display: none; }
+}
+
+/* Vidrio: tarjetas y barras dejan ver el fondo vivo, sin perder legibilidad. */
+@layer components {
+  .glass {
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    backdrop-filter: blur(14px) saturate(1.3);
+  }
+}
+
+/* Campana de notificaciones con casos pendientes: un leve vaivén cada pocos segundos. */
+@keyframes ci-ring {
+  0%, 70%, 100% { transform: rotate(0); }
+  74% { transform: rotate(14deg); }
+  80% { transform: rotate(-12deg); }
+  86% { transform: rotate(8deg); }
+  92% { transform: rotate(-4deg); }
+}
+@media (prefers-reduced-motion: reduce) { .animate-\[ci-ring_2\.4s_ease-in-out_infinite\] { animation: none !important; } }
+
+

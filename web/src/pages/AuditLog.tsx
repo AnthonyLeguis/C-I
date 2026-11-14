@@ -1,7 +1,7 @@
 // Bitácora de Eventos (PR G6 · PLAN_UX §5.6): tabla en consola, filtros, verificar integridad (Master) y CSV.
 import { Download, Search, ShieldCheck, ShieldX } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { AlertBadge, Button, ErrorState, Skeleton, useToast } from "../components/ui";
+import { AlertBadge, Button, ErrorState, Skeleton, Tooltip, useToast } from "../components/ui";
 import { useSession } from "../hooks/useSession";
 import { api } from "../services/apiClient";
 import type { AuditEventsResponse } from "../types/contracts";
@@ -40,7 +40,7 @@ export function AuditLogPage() {
           {ok ? <ShieldCheck size={14} aria-hidden /> : <ShieldX size={14} aria-hidden />} {chain ? (ok ? `CADENA ÍNTEGRA · ${chain.total} REGISTROS` : "CADENA ALTERADA") : `${data?.total ?? 0} REGISTROS`}
         </span>
         {user?.role === "ADMIN" && <Button size="sm" variant="secondary" icon={<ShieldCheck size={15} />} onClick={() => void verify()}>Verificar integridad</Button>}
-        <a href={api.auditCsvUrl} className="press inline-flex h-8 items-center gap-1.5 rounded-control border border-line-strong bg-surface px-3 text-xs font-semibold text-ink" download><Download size={15} aria-hidden /> Exportar CSV</a>
+        {user?.role !== "ANALYST" && <a href={api.auditCsvUrl} className="press inline-flex h-8 items-center gap-1.5 rounded-control border border-line-strong bg-surface px-3 text-xs font-semibold text-ink" download><Download size={15} aria-hidden /> Exportar CSV</a>}
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
@@ -71,8 +71,8 @@ export function AuditLogPage() {
                   <td className="p-3 font-mono text-xs">{e.module}</td>
                   <td className="p-3">{e.actor}</td>
                   <td className="p-3">{e.risk_level ? <AlertBadge level={e.risk_level} /> : <span className="text-slate-500">—</span>}</td>
-                  <td className="max-w-[340px] p-3"><span className="font-semibold">{e.action_taken}</span>{e.xai_explanation && <p className="line-clamp-2 text-xs text-slate-400" title={e.xai_explanation}>{e.xai_explanation}</p>}</td>
-                  <td className="p-3"><button type="button" title="Copiar hash" onClick={() => { void navigator.clipboard?.writeText(e.hash); toast.notify("info", "Hash copiado", e.hash.slice(0, 24)); }} className="font-mono text-xs text-ai hover:underline">{e.hash.slice(0, 10)}…</button></td>
+                  <td className="max-w-[340px] p-3"><span className="font-semibold">{e.action_taken}</span>{e.xai_explanation && <Tooltip content={e.xai_explanation} wide className="block"><p className="line-clamp-2 text-xs text-slate-400">{e.xai_explanation}</p></Tooltip>}</td>
+                  <td className="p-3"><Tooltip content="Copiar hash completo"><button type="button" onClick={() => { void navigator.clipboard?.writeText(e.hash); toast.notify("info", "Hash copiado", e.hash.slice(0, 24)); }} className="font-mono text-xs text-ai hover:underline">{e.hash.slice(0, 10)}…</button></Tooltip></td>
                 </tr>
               ))}
               {data.events.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-slate-400">No hay eventos con esos filtros.</td></tr>}

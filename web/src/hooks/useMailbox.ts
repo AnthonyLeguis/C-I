@@ -1,13 +1,26 @@
-// Estado del Buzón (PR G5): vista, correos, selección, simular llegada y revisión humana.
+// Estado del Buzón (PR G5): vista, correos, correo abierto en el lector (null = listado), simular llegada y revisión humana.
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../services/apiClient";
 import type { DemoScenarioDto, MailboxResponse, MailboxView } from "../types/contracts";
 
+const FOCUS_KEY = "ci-open-email";
+const FOCUS_EVENT = "ci-open-email";
+
+/** Pide al Buzón abrir un caso (lo usa la campana de notificaciones). */
+export function requestMailboxFocus(emailId: string): void {
+  try { sessionStorage.setItem(FOCUS_KEY, emailId); } catch { /* sin almacenamiento */ }
+  window.dispatchEvent(new CustomEvent(FOCUS_EVENT, { detail: emailId }));
+}
+function takeFocusEmail(): string | null {
+  try { const id = sessionStorage.getItem(FOCUS_KEY); sessionStorage.removeItem(FOCUS_KEY); return id; } catch { return null; }
+}
+
 export function useMailbox() {
-  const [view, setView] = useState<MailboxView>("ALL");
+  const [focus] = useState(takeFocusEmail); // caso abierto desde la campana de notificaciones
+  const [view, setView] = useState<MailboxView>(focus ? "PENDING" : "ALL");
   const [data, setData] = useState<MailboxResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(focus);
   const [freshId, setFreshId] = useState<string | null>(null);
   const [scenarios, setScenarios] = useState<DemoScenarioDto[]>([]);
   const [busy, setBusy] = useState(false);
@@ -16,11 +29,18 @@ export function useMailbox() {
     try {
       const d = await api.mailbox(v);
       setData(d); setError(null);
-      setSelectedId((cur) => (cur && d.emails.some((e) => e.id === cur) ? cur : d.emails[0]?.id ?? null));
+      // estilo Gmail: nada se abre solo; si el correo abierto ya no está en la carpeta, se vuelve al listado
+      setSelectedId((cur) => (cur && d.emails.some((e) => e.id === cur) ? cur : null));
     } catch (e: unknown) { setError(e instanceof Error ? e.message : "Error"); }
   }, [view]);
 
   useEffect(() => { void load(view); }, [view, load]);
+  // Si el Buzón ya está abierto y se elige otro caso en la campana
+  useEffect(() => {
+    const on = (e: Event) => { const id = (e as CustomEvent<string>).detail; takeFocusEmail(); if (id) { setView("PENDING"); setSelectedId(id); } };
+    window.addEventListener(FOCUS_EVENT, on);
+    return () => window.removeEventListener(FOCUS_EVENT, on);
+  }, []);
   useEffect(() => { api.scenarios().then((r) => setScenarios(r.scenarios)).catch(() => setScenarios([])); }, []);
 
   const simulate = useCallback(async (caseId: string) => {
@@ -29,8 +49,8 @@ export function useMailbox() {
       const r = await api.deliver(caseId);
       setView("ALL");
       const d = await api.mailbox("ALL");
-      setData(d); setSelectedId(r.email_id); setFreshId(r.email_id);
-      window.setTimeout(() => setFreshId(null), 1500);
+      setData(d); setSelectedId(null); setFreshId(r.email_id); // el correo nuevo entra al listado con destello
+      window.setTimeout(() => setFreshId(null), 2200);
       return r;
     } finally { setBusy(false); }
   }, []);
