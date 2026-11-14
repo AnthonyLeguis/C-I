@@ -2,6 +2,7 @@
 export * from "./Badges";
 export * from "./Button";
 export * from "./Card";
+export * from "./CyberBackground";
 export * from "./KpiCard";
 export * from "./levels";
 export * from "./Logo";
